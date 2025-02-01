@@ -78,7 +78,15 @@ def register_callbacks(app):
 
             return {'left': left_boundary, 'right': right_boundary}
 
-    # Callback для обновления параметров
+
+    def extract_boundaries(boundary_values):
+        left_boundary = boundary_values.get('left', [])
+        right_boundary = boundary_values.get('right', [])
+        left_boundary = [float(b) for b in left_boundary]
+        right_boundary = [float(b) for b in right_boundary]
+        return left_boundary, right_boundary
+
+
     @app.callback(
         Output('quadratic-graph', 'figure'),
         [Input('a-input', 'value'),
@@ -131,10 +139,7 @@ def register_callbacks(app):
             if not boundary_values:
                 raise ValueError("Границы должны быть заданы")
 
-            left_boundary = boundary_values.get('left', [])
-            right_boundary = boundary_values.get('right', [])
-            left_boundary = [float(b) for b in left_boundary]
-            right_boundary = [float(b) for b in right_boundary]
+            left_boundary, right_boundary = extract_boundaries(boundary_values)
 
             if any(boundary < 0 for boundary in left_boundary + right_boundary):
                 raise ValueError("Границы должны быть неотрицательными")
