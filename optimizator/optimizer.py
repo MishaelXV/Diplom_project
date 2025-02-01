@@ -101,7 +101,7 @@ def residuals_(params, x, y, zInf, TG0, atg, A, Pe, b, c):
    """
     return piecewise_constant(params, x, zInf, TG0, atg, A, Pe, b, c) - y
 
-def run_optimization(b, c, Pe, zInf, TG0, atg, A, sigma, N, rng):
+def run_optimization(b, c, Pe, zInf, TG0, atg, A, sigma, N):
     """
     Выполняет оптимизацию параметров для кусочно-постоянной функции температуры.
 
