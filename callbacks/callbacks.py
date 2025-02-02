@@ -4,7 +4,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import numpy as np
 from block.block import TsGLin, calculate_TsGLin_array, geoterma, debit
-from optimizator.optimizer import piecewise_constant, run_optimization, residuals_
+from optimizator.optimizer import main_func, run_optimization, residuals_
 import time
 import plotly.io as pio
 

@@ -1,14 +1,12 @@
 import dash
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
-import numpy as np
-from block.block import calculate_TsGLin_array
+from block.calculates import add_noise_to_temperature, calculate_temperatures
 from callbacks.graphs import create_figure_direct_task
 from callbacks.valid_inputs_of_params import validate_inputs
-from block.calculates import calculate_temperatures
+from block.block import calculate_TsGLin_array
 
 def register_direct_task_callback(app):
-
     def save_temperature_values(T_all, file_path):
         with open(file_path, 'w') as file:
             for value in T_all:
@@ -30,16 +28,11 @@ def register_direct_task_callback(app):
         try:
             b_values, left_boundary, right_boundary = validate_inputs(a, b_values, boundary_values, A, TG0, atg, sigma)
 
-            TsGLin_init = 0
-            TsGLin_array = calculate_TsGLin_array(right_boundary, 100000, TG0, atg, A, b_values, left_boundary, TsGLin_init,
-                                                  a)
-            TsGLin_array = [float(value) for value in TsGLin_array]
+            TsGLin_array = calculate_TsGLin_array(right_boundary, 100000, TG0, atg, A, b_values, left_boundary, 0)
 
-            z_all, T_all = calculate_temperatures(a, left_boundary, right_boundary, N, TG0, atg, A, b_values,
-                                                  TsGLin_array)
+            z_all, T_all = calculate_temperatures(a, left_boundary, right_boundary, N, TG0, atg, A, b_values, TsGLin_array)
 
-            noise = np.random.normal(loc=0, scale=sigma, size=len(T_all))
-            T_all_noisy = np.array(T_all) + noise
+            T_all_noisy = add_noise_to_temperature(T_all, sigma)
 
             # save_temperature_values(T_all, '../tests/data/values/temperatura_values.txt')
 

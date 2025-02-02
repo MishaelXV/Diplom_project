@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 import numpy as np
 from block.block import geoterma
-from optimizator.optimizer import piecewise_constant, residuals_
+from optimizator.optimizer import main_func, residuals_
 
 def create_figure_direct_task(z_all, T_all, T_all_noisy, left_boundary, right_boundary, TG0, atg, a):
     fig = go.Figure()
@@ -35,7 +35,7 @@ def generate_frames(param_history, x_data, y_data, left_boundary, right_boundary
     for i, (params_dict, _) in enumerate(param_history):
         Pe_values = list(params_dict.values())
         Pe_values.append(0)
-        y_predicted = piecewise_constant(params_dict, x_data, 100000, TG0, atg, A, Pe_values, left_boundary, right_boundary)
+        y_predicted = main_func(params_dict, x_data, 100000, TG0, atg, A, Pe_values, left_boundary, right_boundary)
 
         frame = go.Frame(
             data=[
@@ -62,8 +62,8 @@ def generate_frames(param_history, x_data, y_data, left_boundary, right_boundary
 
 def create_figure_animation(frames, x_data, param_history, left_boundary, right_boundary, TG0, atg, A, b_values, y_data):
     initial_params = param_history[0][0] if param_history else {}
-    initial_y_predicted = piecewise_constant(initial_params, x_data, 100000, TG0, atg, A,
-                                              [1 for _ in range(len(b_values))], left_boundary, right_boundary)
+    initial_y_predicted = main_func(initial_params, x_data, 100000, TG0, atg, A, [1 for _ in range(len(b_values))],
+                                    left_boundary, right_boundary)
 
     fig = go.Figure(
         data=[

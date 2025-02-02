@@ -1,6 +1,7 @@
 import numpy as np
-from block.block import TsGLin
+from block.block import TsGLin, calculate_TsGLin_array
 from optimizator.optimizer import run_optimization
+
 def calculate_temperatures(a, left_boundary, right_boundary, N, TG0, atg, A, b_values, TsGLin_array):
     z_all = []
     T_all = []
@@ -24,6 +25,7 @@ def calculate_temperatures(a, left_boundary, right_boundary, N, TG0, atg, A, b_v
 
     return z_all, T_all
 
+
 def round_mantissa(value, decimals=5):
     formatted = f"{value:.{decimals}e}"
     return float(formatted)
@@ -31,3 +33,8 @@ def round_mantissa(value, decimals=5):
 
 def perform_optimization(left_boundary, right_boundary, b_values, TG0, atg, A, sigma, N):
     return run_optimization(left_boundary, right_boundary, b_values, 100000, TG0, atg, A, sigma, N)
+
+
+def add_noise_to_temperature(T_all, sigma):
+    noise = np.random.normal(loc=0, scale=sigma, size=len(T_all))
+    return np.array(T_all) + noise
