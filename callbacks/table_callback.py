@@ -1,6 +1,6 @@
 import dash
 from dash.dependencies import Input, Output
-from callbacks.boundaries import extract_boundaries
+from components.boundaries import extract_boundaries
 from block.calculates import round_mantissa
 from block.calculates import perform_optimization
 

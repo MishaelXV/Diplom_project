@@ -2,8 +2,8 @@ import dash
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 from block.calculates import add_noise_to_temperature, calculate_temperatures
-from callbacks.graphs import create_figure_direct_task
-from callbacks.valid_inputs_of_params import validate_inputs
+from components.graphs import create_figure_direct_task
+from components.valid_inputs_of_params import validate_inputs
 from block.block import calculate_TsGLin_array
 
 def register_direct_task_callback(app):

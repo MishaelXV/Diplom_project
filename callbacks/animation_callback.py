@@ -1,8 +1,8 @@
 import dash
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
-from callbacks.boundaries import extract_boundaries
-from callbacks.graphs import create_figure_animation, generate_frames
+from components.boundaries import extract_boundaries
+from components.graphs import create_figure_animation, generate_frames
 from block.calculates import perform_optimization
 
 def register_animation_callback(app):

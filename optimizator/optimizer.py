@@ -1,8 +1,7 @@
 from lmfit import minimize, Parameters
 import numpy as np
-from block import bb
 import pandas as pd
-from block.block import calculate_TsGLin_array
+from block.block import calculate_TsGLin_array, TsGLin
 
 rng = np.random.default_rng(42)
 
@@ -12,7 +11,7 @@ def main_func(params, z, zInf, TG0, atg, A, Pe, b, c):
 
     result = np.where(
         (z >= b[0]) & (z < c[0]),
-        bb.TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{1}', 0.0)), b[0], TsGLin_array[0]),
+        TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{1}', 0.0)), b[0], TsGLin_array[0]),
         result
     )
 
@@ -25,7 +24,7 @@ def main_func(params, z, zInf, TG0, atg, A, Pe, b, c):
 
         result = np.where(
             (z >= b[i + 1]) & (z < c[i + 1]),
-            bb.TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{i + 2}', 0.0)), b[i + 1], TsGLin_array[i + 1]),
+            TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{i + 2}', 0.0)), b[i + 1], TsGLin_array[i + 1]),
             result
         )
 

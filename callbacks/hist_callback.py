@@ -2,8 +2,8 @@ import dash
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 from block.calculates import perform_optimization
-from callbacks.boundaries import extract_boundaries
-from callbacks.graphs import create_histogram
+from components.boundaries import extract_boundaries
+from components.graphs import create_histogram
 
 def register_hist_callback(app):
     @app.callback(

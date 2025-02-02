@@ -1,5 +1,5 @@
 import numpy as np
-from block.block import TsGLin, calculate_TsGLin_array
+from block.block import TsGLin
 from optimizator.optimizer import run_optimization
 
 def calculate_temperatures(a, left_boundary, right_boundary, N, TG0, atg, A, b_values, TsGLin_array):

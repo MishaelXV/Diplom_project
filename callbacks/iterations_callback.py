@@ -2,9 +2,8 @@ import dash
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 from block.calculates import perform_optimization
-from callbacks.boundaries import extract_boundaries
-from callbacks.graphs import create_iterations_traces, create_update_buttons
-
+from components.boundaries import extract_boundaries
+from components.graphs import create_iterations_traces, create_update_buttons
 
 def prepare_dataframe(df_history):
     df_history = df_history.reset_index()

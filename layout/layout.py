@@ -11,6 +11,7 @@ sigma_initial = 0.01
 zInf = 100000
 N_initial = 50
 
+
 def create_header():
     return html.Div(
         style={
@@ -85,6 +86,7 @@ def create_input_field(label, input_id, value, step=1):
         ]
     )
 
+
 def create_debit_calculation_section():
     return html.Div(
         style={'marginBottom': '10px', 'width': '100%'},
@@ -136,6 +138,7 @@ def create_debit_calculation_section():
         ]
     )
 
+
 def create_plot_area():
     return html.Div(
         style={
@@ -155,6 +158,7 @@ def create_plot_area():
         ]
     )
 
+
 def create_animation_container():
     return html.Div(
         id="animation-container",
@@ -172,6 +176,7 @@ def create_animation_container():
             create_fullscreen_button(),
         ]
     )
+
 
 def create_fullscreen_button():
     return html.Button(
@@ -199,6 +204,7 @@ def create_fullscreen_button():
         }
     )
 
+
 def create_details_container():
     return html.Div(
         id="detal-container",
@@ -208,6 +214,7 @@ def create_details_container():
             create_residuals_graphs(),
         ]
     )
+
 
 def create_parameters_graph():
     return html.Div(
@@ -248,6 +255,7 @@ def create_parameters_graph():
         ]
     )
 
+
 def create_residuals_graphs():
     return html.Div(
         style={
@@ -262,6 +270,7 @@ def create_residuals_graphs():
             create_histogram_graph(),
         ]
     )
+
 
 def create_data_table():
     return html.Div(
@@ -330,6 +339,7 @@ def create_histogram_graph():
             dcc.Graph(id='hist-graph', config={'displayModeBar': False}),
         ]
     )
+
 
 def create_layout():
     return html.Div(
