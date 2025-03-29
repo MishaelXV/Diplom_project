@@ -16,18 +16,18 @@ def TsGLin(z, zInf, TG0, atg, A, Pe, zl, Tl):
         result = 1 / ((-1 + mpmath.exp(mpmath.sqrt(4 * A + Pe ** 2) * (zInf - zl))) * A) * mpmath.exp(
             1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (zInf - zl) - Pe * (zInf + zl))
         ) * (
-                         atg * mpmath.exp(
-                     1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (z_val - zl) + Pe * (z_val + zl))) * Pe
-                         - atg * mpmath.exp(
-                     1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (-z_val + zl) + Pe * (z_val + zl))) * Pe
-                         + mpmath.exp(1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (zInf - zl) + Pe * (zInf + zl)))
-                         * (TG0 * A - atg * Pe + atg * A * z_val)
-                         + mpmath.exp(1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (-zInf + zl) + Pe * (zInf + zl)))
-                         * (-TG0 * A + atg * (Pe - A * z_val))
-                         + mpmath.exp(1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (z_val - zInf) + Pe * (z_val + zInf)))
-                         * (TG0 * A - Tl * A - atg * Pe + atg * A * zl)
-                         + mpmath.exp(1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (-z_val + zInf) + Pe * (z_val + zInf)))
-                         * (-TG0 * A + Tl * A + atg * (Pe - A * zl))
+             atg * mpmath.exp(
+         1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (z_val - zl) + Pe * (z_val + zl))) * Pe
+             - atg * mpmath.exp(
+         1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (-z_val + zl) + Pe * (z_val + zl))) * Pe
+             + mpmath.exp(1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (zInf - zl) + Pe * (zInf + zl)))
+             * (TG0 * A - atg * Pe + atg * A * z_val)
+             + mpmath.exp(1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (-zInf + zl) + Pe * (zInf + zl)))
+             * (-TG0 * A + atg * (Pe - A * z_val))
+             + mpmath.exp(1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (z_val - zInf) + Pe * (z_val + zInf)))
+             * (TG0 * A - Tl * A - atg * Pe + atg * A * zl)
+             + mpmath.exp(1 / 2 * (mpmath.sqrt(4 * A + Pe ** 2) * (-z_val + zInf) + Pe * (z_val + zInf)))
+             * (-TG0 * A + Tl * A + atg * (Pe - A * zl))
                  )
         results.append(float(result))
     return results

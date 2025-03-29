@@ -43,6 +43,17 @@ def generate_data(b, c, Pe, zInf, TG0, atg, A, sigma, N):
     return x_data, y_data
 
 
+def compute_relative_error(param_history, true_Pe):
+    last_params = param_history[-1][0]
+    predicted_Pe = np.array([last_params[f'Pe_{i + 1}'] for i in range(len(true_Pe) - 1)])
+    true_Pe = np.array(true_Pe[:-1])
+
+    relative_error = np.abs((predicted_Pe - true_Pe) / true_Pe) * 100
+    mean_relative_error = np.mean(relative_error)
+
+    return mean_relative_error
+
+
 def process_results(param_history):
     df_history = pd.DataFrame(param_history, columns=['parameters', 'Невязка'])
     df_params = pd.json_normalize(df_history['parameters'])
@@ -72,7 +83,7 @@ def run_optimization(b, c, Pe, zInf, TG0, atg, A, sigma, N):
         chi_squared = float(np.sum(resid ** 2))
         param_history.append((param_values, chi_squared))
 
-    result = minimize(residuals, params, args=(x_data, y_data), method='leastsq', iter_cb=iter_callback, ftol=1e-4, xtol = 1e-4)
+    result = minimize(residuals, params, args=(x_data, y_data), method='leastsq', iter_cb=iter_callback, ftol=1e-4, xtol=1e-4)
 
     df_history = process_results(param_history)
 

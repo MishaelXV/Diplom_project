@@ -1,45 +1,71 @@
 import dash
+import numpy as np
 from dash.dependencies import Input, Output
-import plotly.graph_objects as go
-from components.boundaries import extract_boundaries
 from components.graphs import create_figure_animation, generate_frames
-from block.calculates import perform_optimization
 
 def register_animation_callback(app):
     @app.callback(
         Output('animation-container', 'style'),
         Output('animation-graph', 'figure'),
-        Input('solve_inverse_task', 'n_clicks'),
-        [Input({'type': 'b-input', 'index': dash.dependencies.ALL}, 'value'),
-         Input('boundary-store', 'data'),
-         Input('A-input', 'value'),
+        Input('optimization-cache', 'data'),
+        Input('boundaries-cache', 'data'),
+        [Input('A-input', 'value'),
          Input('TG0-input', 'value'),
          Input('atg-input', 'value'),
-         Input('sigma-input', 'value'),
-         Input('N-input', 'value')]
+         Input({'type': 'b-input', 'index': dash.dependencies.ALL}, 'value')],
+        prevent_initial_call=True
     )
-    def update_animation(n_clicks, b_values, boundary_values, A, TG0, atg, sigma, N):
-        if not n_clicks:
-            return {'display': 'none'}, dash.no_update
-        if len(b_values) == 1:
+    def update_animation(optimization_data, boundaries_data, A, TG0, atg, b_values):
+        if not optimization_data or not boundaries_data:
             return {'display': 'none'}, dash.no_update
 
-        try:
-            left_boundary, right_boundary = extract_boundaries(boundary_values)
-            result, param_history, df_history, x_data, y_data = perform_optimization(left_boundary, right_boundary, b_values, TG0, atg, A, sigma, N)
+        # 1. Восстанавливаем границы
+        left_boundary = boundaries_data['left']
+        right_boundary = boundaries_data['right']
 
-            frames = generate_frames(param_history, x_data, y_data, left_boundary, right_boundary, TG0, atg, A, b_values)
-            fig = create_figure_animation(frames, x_data, param_history, left_boundary, right_boundary, TG0, atg, A, b_values, y_data)
+        # 2. Восстанавливаем param_history
+        param_history = [
+            (item['params'], item['residual'])
+            for item in optimization_data['param_history']
+        ]
 
-            return {
-                'display': 'block',
-                'width': '98.5%',
-                'height': '450px',
-                'border': '1px solid #ccc',
-                'padding': '10px',
-                'boxSizing': 'border-box',
-                'backgroundColor': '#ffffff'
-            }, fig
+        # 3. Восстанавливаем массивы данных
+        x_data = np.array(optimization_data['x_data'])
+        y_data = np.array(optimization_data['y_data'])
 
-        except Exception as e:
-            return {'display': 'none'}, go.Figure(layout=go.Layout(title=f"Ошибка: {e}"))
+
+        # 5. Генерация анимации с восстановленными данными
+        frames = generate_frames(
+            param_history=param_history,
+            x_data=x_data,
+            y_data=y_data,
+            left_boundary=left_boundary,
+            right_boundary=right_boundary,
+            TG0=TG0,
+            atg=atg,
+            A=A,
+            b_values=b_values
+        )
+
+        fig = create_figure_animation(
+            frames=frames,
+            x_data=x_data,
+            param_history=param_history,
+            left_boundary=left_boundary,
+            right_boundary=right_boundary,
+            TG0=TG0,
+            atg=atg,
+            A=A,
+            b_values=b_values,
+            y_data=y_data
+        )
+
+        return {
+            'display': 'block',
+            'width': '98.5%',
+            'height': '450px',
+            'border': '1px solid #ccc',
+            'padding': '10px',
+            'boxSizing': 'border-box',
+            'backgroundColor': '#ffffff'
+        }, fig

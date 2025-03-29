@@ -1,9 +1,11 @@
 import dash
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
+from block.cache import perform_optimization_cached, get_boundaries_cached, extract_boundaries_cached
 from block.calculates import perform_optimization
 from components.boundaries import extract_boundaries
 from components.graphs import create_iterations_traces, create_update_buttons
+import pandas as pd
 
 def prepare_dataframe(df_history):
     df_history = df_history.reset_index()
@@ -14,30 +16,32 @@ def prepare_dataframe(df_history):
 def register_iterations_callback(app):
     @app.callback(
         Output('parameters-graph', 'figure'),
-        [Input({'type': 'b-input', 'index': dash.dependencies.ALL}, 'value'),
-         Input('boundary-store', 'data'),
-         Input('A-input', 'value'),
-         Input('TG0-input', 'value'),
-         Input('atg-input', 'value'),
-         Input('sigma-input', 'value'),
-         Input('N-input', 'value')]
+        [Input('optimization-cache', 'data'),  # Основной источник данных
+         Input('boundaries-cache', 'data')],  # Границы из кэша
+        prevent_initial_call=True
     )
-    def update_iterations_graph(b_values, boundary_values, A, TG0, atg, sigma, N):
+    def update_iterations_graph(optimization_data, boundaries_data):
         try:
-            left_boundary, right_boundary = extract_boundaries(boundary_values)
+            # Проверяем наличие данных в кэше
+            if not optimization_data or not boundaries_data:
+                return go.Figure(layout=go.Layout(title="Ожидание данных..."))
 
-            result, param_history, df_history, x_data, y_data = perform_optimization(
-                left_boundary, right_boundary, b_values, TG0, atg, A, sigma, N)
+            # Восстанавливаем DataFrame из кэша
+            df_history = pd.DataFrame(
+                data=optimization_data['df_history']['data'],
+                columns=optimization_data['df_history']['columns']
+            )
 
+            # Подготавливаем DataFrame (если нужно)
             df_history = prepare_dataframe(df_history)
 
-            num_pe_params = len(b_values) - 1
+            num_pe_params = len(boundaries_data['right']) - 1
 
             fig = create_iterations_traces(df_history, num_pe_params)
 
             buttons = create_update_buttons(num_pe_params)
 
-            if len(right_boundary) > 2:
+            if num_pe_params > 1:
                 buttons.append(dict(
                     label="Все параметры",
                     method="update",

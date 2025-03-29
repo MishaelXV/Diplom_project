@@ -11,6 +11,8 @@ from callbacks.iterations_callback import register_iterations_callback
 from callbacks.residuals_callback import register_residuals_callback
 from callbacks.hist_callback import register_hist_callback
 from callbacks.realisation_callback import register_realisation_callback
+from callbacks.error_callback import register_error_callback
+from callbacks.cache_callback import register_cache_callback
 
 app = dash.Dash(__name__)
 
@@ -27,6 +29,8 @@ register_iterations_callback(app)
 register_residuals_callback(app)
 register_hist_callback(app)
 register_realisation_callback(app)
+register_error_callback(app)
+register_cache_callback(app)
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8052)

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from lmfit import minimize, Parameters
 import pandas as pd
 import seaborn as sns
-from block.block import calculate_TsGLin_array, bb
+from block.block import calculate_TsGLin_array
 
 # Определение общих констант
 zInf = 100000
@@ -23,7 +23,7 @@ def main_func(params, z, Pe):
     model = np.full_like(z, np.nan, dtype=float)
     model = np.where(
         (z >= b[0]) & (z <= c[0]),  # Проверяем, что z в пределах первого интервала
-        bb.TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{1}', 0)), b[0], TsGLin_array[0]),
+        block.TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{1}', 0)), b[0], TsGLin_array[0]),
         model
     )
 

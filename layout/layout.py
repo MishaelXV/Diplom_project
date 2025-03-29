@@ -11,7 +11,6 @@ sigma_initial = 0.01
 zInf = 100000
 N_initial = 50
 
-
 def create_header():
     return html.Div(
         style={
@@ -69,7 +68,7 @@ def create_parameters_input():
             create_input_field("Параметр A:", "A-input", A_initial),
             create_input_field("Параметр TG0:", "TG0-input", TG0_initial, step=0.1),
             create_input_field("Параметр atg:", "atg-input", atg_initial, step=0.0001),
-            create_input_field("Параметр sigma:", "sigma-input", sigma_initial, step=0.01),
+            create_input_field("Параметр sigma:", "sigma-input", sigma_initial, step=0.0001),
             create_input_field("Количество замеров:", "N-input", N_initial, step=1),
             create_debit_calculation_section(),
         ]
@@ -208,10 +207,15 @@ def create_fullscreen_button():
 def create_details_container():
     return html.Div(
         id="detal-container",
-        style={'display': 'none', 'flexDirection': 'row', 'alignItems': 'flex-start', 'width': '100%'},
+        style={'display': 'none', 'flexDirection': 'column', 'alignItems': 'flex-start', 'width': '100%'},
         children=[
-            create_parameters_graph(),
-            create_residuals_graphs(),
+            html.Div(
+                style={'display': 'flex', 'flexDirection': 'row', 'width': '100%'},
+                children=[
+                    create_parameters_graph(),
+                    create_residuals_graphs(),
+                ]
+            ),
         ]
     )
 
@@ -252,6 +256,20 @@ def create_parameters_graph():
                     dcc.Graph(id='residual-graph'),
                 ]
             ),
+            html.Div(id='error-container',
+                     style={
+                         'display': 'flex',
+                         'marginLeft': '15px',
+                         'marginTop': '15px',
+                         'backgroundColor': '#ffffff',
+                         'border': '1px solid #cccccc',
+                         'padding': '15px',
+                         'flexDirection': 'column',
+                         'alignItems': 'center',
+                         'width': '100%'
+                     },
+                     children=[html.Div(id ='error-text')]
+                     ),
         ]
     )
 
@@ -353,6 +371,8 @@ def create_layout():
         children=[
             create_header(),
             dcc.Store(id='boundary-store', data=[]),
+            dcc.Store(id='optimization-cache'),  
+            dcc.Store(id='boundaries-cache'),
             html.Div(
                 style={'display': 'flex', 'flexDirection': 'row', 'alignItems': 'flex-start', 'width': '100%'},
                 children=[
