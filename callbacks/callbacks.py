@@ -5,8 +5,6 @@ import plotly.io as pio
 pio.templates.default = "seaborn"
 
 def register_callbacks(app):
-
-
     @app.callback(
         [Output('animation-graph', 'style')],
         [Input('fullscreen-button', 'n_clicks')],

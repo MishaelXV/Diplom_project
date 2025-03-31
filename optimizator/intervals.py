@@ -125,16 +125,57 @@ def get_boundaries(boundary_dict, Pe, N, sigma, TG0, atg, A):
 
 # Запуск основной функции
 def calculate_error_percentage(true_left, true_right, found_left, found_right):
-    if len(true_left) != len(found_left) or len(true_right) != len(found_right):
-        print("Предупреждение: количество найденных границ не совпадает с истинными.")
+    """
+    Вычисляет среднюю процентную ошибку между истинными и найденными границами.
 
-    # Вычисляем процентную ошибку для каждой границы
-    left_errors = [(abs(tl - fl) / tl) * 100 for tl, fl in zip(true_left, found_left)]
-    right_errors = [(abs(tr - fr) / tr) * 100 for tr, fr in zip(true_right, found_right)]
+    Параметры:
+        true_left: список истинных левых границ
+        true_right: список истинных правых границ
+        found_left: список найденных левых границ
+        found_right: список найденных правых границ
+
+    Возвращает:
+        Среднюю процентную ошибку или None при некорректных данных
+    """
+    # Проверка входных данных
+    if not all(isinstance(lst, (list, tuple)) for lst in [true_left, true_right, found_left, found_right]):
+        print("Ошибка: все входные данные должны быть списками или кортежами")
+        return None
+
+    if len(true_left) != len(found_left) or len(true_right) != len(found_right):
+        print("Предупреждение: количество найденных границ не совпадает с истинными")
+        return None
+
+    if not true_left or not true_right:
+        print("Ошибка: пустые списки границ")
+        return None
+
+    # Вычисляем ошибки с защитой от деления на ноль
+    def calculate_errors(true_vals, found_vals):
+        errors = []
+        for t, f in zip(true_vals, found_vals):
+            try:
+                if t == 0:
+                    # Если истинное значение 0, используем абсолютную ошибку
+                    errors.append(abs(f) * 100)
+                else:
+                    errors.append((abs(t - f) / t) * 100)
+            except TypeError:
+                print(f"Ошибка: нечисловые значения в данных ({t}, {f})")
+                return None
+        return errors
+
+    left_errors = calculate_errors(true_left, found_left)
+    right_errors = calculate_errors(true_right, found_right)
+
+    if left_errors is None or right_errors is None:
+        return None
 
     # Усредняем погрешность
-    total_error = (sum(left_errors) + sum(right_errors)) / (len(left_errors) + len(right_errors))
-    return total_error
+    total_errors = left_errors + right_errors
+    avg_error = sum(total_errors) / len(total_errors)
+
+    return avg_error
 
 
 # Запуск основной функции с вычислением процентной ошибки

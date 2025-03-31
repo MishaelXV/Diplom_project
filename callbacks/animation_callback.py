@@ -19,32 +19,28 @@ def register_animation_callback(app):
         if not optimization_data or not boundaries_data:
             return {'display': 'none'}, dash.no_update
 
-        # 1. Восстанавливаем границы
         left_boundary = boundaries_data['left']
         right_boundary = boundaries_data['right']
 
-        # 2. Восстанавливаем param_history
         param_history = [
             (item['params'], item['residual'])
             for item in optimization_data['param_history']
         ]
 
-        # 3. Восстанавливаем массивы данных
         x_data = np.array(optimization_data['x_data'])
-        y_data = np.array(optimization_data['y_data'])
+        x_data_true = boundaries_data['x_data_true']
+        y_data_true = boundaries_data['y_data_true']
 
-
-        # 5. Генерация анимации с восстановленными данными
         frames = generate_frames(
             param_history=param_history,
             x_data=x_data,
-            y_data=y_data,
+            x_data_true = x_data_true,
+            y_data_true = y_data_true,
             left_boundary=left_boundary,
             right_boundary=right_boundary,
             TG0=TG0,
             atg=atg,
             A=A,
-            b_values=b_values
         )
 
         fig = create_figure_animation(
@@ -57,7 +53,8 @@ def register_animation_callback(app):
             atg=atg,
             A=A,
             b_values=b_values,
-            y_data=y_data
+            x_data_true= x_data_true,
+            y_data_true = y_data_true,
         )
 
         return {

@@ -2,6 +2,8 @@ import dash
 from dash.dependencies import Input, Output
 from block.calculates import perform_optimization
 from components.boundaries import extract_boundaries
+from optimizator.intervals import get_boundaries
+from optimizator.optimizer import generate_data
 
 def register_cache_callback(app):
     @app.callback(
@@ -21,38 +23,40 @@ def register_cache_callback(app):
         if not n_clicks:
             raise dash.exceptions.PreventUpdate
 
-        # 1. Извлекаем границы
-        left, right = extract_boundaries(boundary_data)
+        left, right = get_boundaries(boundary_data, b_values, N, sigma, TG0, atg, A)
+        left_true, right_true = extract_boundaries(boundary_data)
 
-        # 2. Вычисляем оптимизацию
         result, param_history, df_history, x_data, y_data = perform_optimization(
             left, right, b_values, TG0, atg, A, sigma, N
         )
 
-        # 3. Подготавливаем данные для кэша (только сериализуемые объекты)
+        x_data_true, y_data_true = generate_data(left_true, right_true, b_values, 1000000, TG0, atg, A, sigma, N)
+
         boundaries_cache = {
             'left': left,
-            'right': right
+            'right': right,
+            'left_true': left_true,
+            'right_true': right_true,
+            'x_data_true': x_data_true,
+            'y_data_true': y_data_true,
         }
 
-        # Преобразуем param_history
         serializable_param_history = [
             {
-                'params': dict(params),  # Преобразуем в обычный словарь
+                'params': dict(params),
                 'residual': float(residual)
             }
             for params, residual in param_history
         ]
 
-        # Преобразуем DataFrame
         df_history_dict = {
             'columns': df_history.columns.tolist(),
             'data': df_history.values.tolist()
         }
 
-        # Преобразуем numpy массивы
         optimization_cache = {
-            'params': {k: v.value for k, v in result.params.items()},  # Основные параметры
+            'params': {k: v.value for k, v in result.params.items()},
+            'true_Pe': b_values,
             'success': bool(result.success),
             'message': str(result.message),
             'param_history': serializable_param_history,

@@ -44,12 +44,30 @@ def generate_data(b, c, Pe, zInf, TG0, atg, A, sigma, N):
 
 
 def compute_relative_error(param_history, true_Pe):
-    last_params = param_history[-1][0]
-    predicted_Pe = np.array([last_params[f'Pe_{i + 1}'] for i in range(len(true_Pe) - 1)])
-    true_Pe = np.array(true_Pe[:-1])
+    if not param_history or not true_Pe:
+        print("Ошибка: пустые входные данные")
+        return float('nan')
 
-    relative_error = np.abs((predicted_Pe - true_Pe) / true_Pe) * 100
-    mean_relative_error = np.mean(relative_error)
+    last_params = param_history[-1][0]
+
+    num_pe = len([k for k in last_params.keys() if k.startswith('Pe_')])
+    if num_pe == 0:
+        print("Ошибка: не найдены параметры Pe")
+        return float('nan')
+
+    predicted_Pe = np.array([last_params[f'Pe_{i + 1}'] for i in range(num_pe)])
+
+    if len(true_Pe) < num_pe:
+        print(f"Ошибка: true_Pe содержит {len(true_Pe)} элементов, но ожидается {num_pe}")
+        return float('nan')
+
+    true_Pe_array = np.array(true_Pe[:num_pe])
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        relative_error = np.abs((predicted_Pe - true_Pe_array) / true_Pe_array) * 100
+        relative_error[true_Pe_array == 0] = 0
+
+    mean_relative_error = np.nanmean(relative_error)
 
     return mean_relative_error
 
@@ -83,7 +101,7 @@ def run_optimization(b, c, Pe, zInf, TG0, atg, A, sigma, N):
         chi_squared = float(np.sum(resid ** 2))
         param_history.append((param_values, chi_squared))
 
-    result = minimize(residuals, params, args=(x_data, y_data), method='leastsq', iter_cb=iter_callback, ftol=1e-4, xtol=1e-4)
+    result = minimize(residuals, params, args=(x_data, y_data), method='leastsq', iter_cb=iter_callback, ftol=1e-15)
 
     df_history = process_results(param_history)
 

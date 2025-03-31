@@ -30,7 +30,7 @@ def create_figure_direct_task(z_all, T_all, T_all_noisy, left_boundary, right_bo
     return fig
 
 
-def generate_frames(param_history, x_data, y_data, left_boundary, right_boundary, TG0, atg, A, b_values):
+def generate_frames(param_history, x_data, x_data_true, y_data_true, left_boundary, right_boundary, TG0, atg, A):
     frames = []
     for i, (params_dict, _) in enumerate(param_history):
         Pe_values = list(params_dict.values())
@@ -47,8 +47,8 @@ def generate_frames(param_history, x_data, y_data, left_boundary, right_boundary
                     line=dict(dash='dash', width=3)
                 ),
                 go.Scatter(
-                    x=x_data,
-                    y=y_data,
+                    x=x_data_true,
+                    y=y_data_true,
                     mode='markers',
                     name='Замеры',
                     marker=dict(size=11, opacity=0.5)
@@ -60,7 +60,7 @@ def generate_frames(param_history, x_data, y_data, left_boundary, right_boundary
     return frames
 
 
-def create_figure_animation(frames, x_data, param_history, left_boundary, right_boundary, TG0, atg, A, b_values, y_data):
+def create_figure_animation(frames, x_data, param_history, left_boundary, right_boundary, TG0, atg, A, b_values, x_data_true, y_data_true):
     initial_params = param_history[0][0] if param_history else {}
     initial_y_predicted = main_func(initial_params, x_data, 100000, TG0, atg, A, [1 for _ in range(len(b_values))],
                                     left_boundary, right_boundary)
@@ -75,8 +75,8 @@ def create_figure_animation(frames, x_data, param_history, left_boundary, right_
                 line=dict(dash='dash', width=3)
             ),
             go.Scatter(
-                x=x_data,
-                y=y_data,
+                x=x_data_true,
+                y=y_data_true,
                 mode='markers',
                 name='Замеры',
                 marker=dict(size=11, opacity=0.5)
