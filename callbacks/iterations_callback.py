@@ -1,13 +1,8 @@
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
+from calculates_block.calculates import prepare_dataframe_2
 from components.graphs import create_iterations_traces, create_update_buttons
 import pandas as pd
-
-def prepare_dataframe(df_history):
-    df_history = df_history.reset_index()
-    df_history.rename(columns={'index': 'Итерация'}, inplace=True)
-    return df_history
-
 
 def register_iterations_callback(app):
     @app.callback(
@@ -26,7 +21,7 @@ def register_iterations_callback(app):
                 columns=optimization_data['df_history']['columns']
             )
 
-            df_history = prepare_dataframe(df_history)
+            df_history = prepare_dataframe_2(df_history)
 
             num_pe_params = len(boundaries_data['right']) - 1
 

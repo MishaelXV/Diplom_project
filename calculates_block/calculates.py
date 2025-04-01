@@ -113,3 +113,22 @@ def perform_optimization(left_boundary, right_boundary, b_values, TG0, atg, A, s
 def add_noise_to_temperature(T_all, sigma):
     noise = np.random.normal(loc=0, scale=sigma, size=len(T_all))
     return np.array(T_all) + noise
+
+
+def save_temperature_values(T_all, file_path):
+    with open(file_path, 'w') as file:
+        for value in T_all:
+            file.write(f"{value}\n")
+
+
+def prepare_dataframe(df_history):
+    df_history['Невязка'] = df_history['Невязка'].apply(round_mantissa)
+    df_history.reset_index(inplace=True)
+    df_history.rename(columns={'index': 'Итерация'}, inplace=True)
+    return df_history.to_dict('records')
+
+
+def prepare_dataframe_2(df_history):
+    df_history = df_history.reset_index()
+    df_history.rename(columns={'index': 'Итерация'}, inplace=True)
+    return df_history

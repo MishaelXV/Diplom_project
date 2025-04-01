@@ -1,7 +1,7 @@
 from lmfit import minimize, Parameters
 import numpy as np
 import pandas as pd
-from calculates_block.utils import main_func
+from calculates_block.main_functions import main_func
 
 rng = np.random.default_rng(42)
 
