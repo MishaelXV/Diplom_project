@@ -7,7 +7,7 @@ b_values_initial = [200]
 A_initial = 1
 TG0_initial = 1
 atg_initial = 0.0001
-sigma_initial = 0.01
+sigma_initial = 0.001
 zInf = 100000
 N_initial = 50
 
@@ -371,7 +371,7 @@ def create_layout():
         children=[
             create_header(),
             dcc.Store(id='boundary-store', data=[]),
-            dcc.Store(id='optimization-cache'),  
+            dcc.Store(id='optimization-cache'),
             dcc.Store(id='boundaries-cache'),
             html.Div(
                 style={'display': 'flex', 'flexDirection': 'row', 'alignItems': 'flex-start', 'width': '100%'},

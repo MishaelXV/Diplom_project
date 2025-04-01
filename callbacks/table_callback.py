@@ -1,6 +1,6 @@
 import pandas as pd
 from dash.dependencies import Input, Output
-from block.calculates import round_mantissa
+from calculates_block.calculates import round_mantissa
 
 def prepare_dataframe(df_history):
     df_history['Невязка'] = df_history['Невязка'].apply(round_mantissa)

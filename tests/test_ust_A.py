@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from lmfit import minimize, Parameters
-from block.block import bb, preprocessing as pre
+from calculates_block.calculates import calculate_TsGLin_array, TsGLin
 import seaborn as sns
 
 # Определение общих констант
@@ -32,7 +32,7 @@ def piecewise_constant(params, z, TsGLin_array):
     # обрабатываем первый интервал
     result = np.where(
         (z >= b[0]) & (z < c[0]),  # Проверяем, что z в пределах первого интервала
-        bb.TsGLin(z, zInf, TG0, atg, n, float(params.get(f'Pe_{1}', 0.0)), b[0], TsGLin_array[0]),
+        TsGLin(z, zInf, TG0, atg, n, float(params.get(f'Pe_{1}', 0.0)), b[0], TsGLin_array[0]),
         result
     )
 
@@ -46,7 +46,7 @@ def piecewise_constant(params, z, TsGLin_array):
 
         result = np.where(
             (z >= b[i + 1]) & (z < c[i + 1]),
-            bb.TsGLin(z, zInf, TG0, atg, n, float(params.get(f'Pe_{i + 2}', 0.0)), b[i + 1], TsGLin_array[i + 1]),
+            TsGLin(z, zInf, TG0, atg, n, float(params.get(f'Pe_{i + 2}', 0.0)), b[i + 1], TsGLin_array[i + 1]),
             result
         )
 
@@ -83,7 +83,7 @@ for n in A:
     disp_results = []
     mean_results = []
     TsGLin_init = 0
-    TsGLin_array = pre.calculate_TsGLin_array(c, zInf, TG0, atg, n, Pe, b, TsGLin_init, len(c))
+    TsGLin_array = calculate_TsGLin_array(c, zInf, TG0, atg, n, Pe, b, TsGLin_init, len(c))
     TsGLin_array = [float(value) for value in TsGLin_array]
     for sigma in sigma_values:
         deviations = []

@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from lmfit import minimize, Parameters
-from block.block import bb, preprocessing as pre
+from calculates_block.calculates import calculate_TsGLin_array, TsGLin
 
 # Определение общих констант
 zInf = 100000
@@ -14,7 +14,7 @@ Pe = [2000, 1000, 0]
 
 # Получаем значения температуры
 TsGLin_init = 0
-TsGLin_array = pre.calculate_TsGLin_array(c, zInf, TG0, atg, A, Pe, b, TsGLin_init, len(c))
+TsGLin_array = calculate_TsGLin_array(c, zInf, TG0, atg, A, Pe, b, TsGLin_init, len(c))
 TsGLin_array = [float(value) for value in TsGLin_array]
 
 
@@ -30,7 +30,7 @@ def piecewise_constant(params, z):
     # обрабатываем первый интервал
     result = np.where(
         (z >= b[0]) & (z < c[0]),  # Проверяем, что z в пределах первого интервала
-        bb.TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{1}', 0.0)), b[0], TsGLin_array[0]),
+        TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{1}', 0.0)), b[0], TsGLin_array[0]),
         result
     )
 
@@ -44,7 +44,7 @@ def piecewise_constant(params, z):
 
         result = np.where(
             (z >= b[i + 1]) & (z < c[i + 1]),
-            bb.TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{i + 2}', 0.0)), b[i + 1], TsGLin_array[i + 1]),
+            TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{i + 2}', 0.0)), b[i + 1], TsGLin_array[i + 1]),
             result
         )
 

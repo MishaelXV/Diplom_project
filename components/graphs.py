@@ -1,7 +1,8 @@
 import plotly.graph_objects as go
 import numpy as np
-from block.block import geoterma
-from optimizator.optimizer import main_func, residuals_
+from calculates_block.calculates import geoterma
+from calculates_block.calculates import main_func
+from optimizator.optimizer import residuals_
 
 def create_figure_direct_task(z_all, T_all, T_all_noisy, left_boundary, right_boundary, TG0, atg, a):
     fig = go.Figure()
@@ -51,7 +52,16 @@ def generate_frames(param_history, x_data, x_data_true, y_data_true, left_bounda
                     y=y_data_true,
                     mode='markers',
                     name='Замеры',
-                    marker=dict(size=11, opacity=0.5)
+                    marker=dict(
+                        size=11,
+                        opacity=0.8,
+                        color='rgba(0,0,0,0)',
+                        line=dict(
+                            color='black',
+                            width=2
+                        ),
+                        symbol='circle'
+                    )
                 )
             ],
             name=f'Итерация_{i}'
@@ -79,7 +89,15 @@ def create_figure_animation(frames, x_data, param_history, left_boundary, right_
                 y=y_data_true,
                 mode='markers',
                 name='Замеры',
-                marker=dict(size=11, opacity=0.5)
+                marker=dict(size=11,
+                        opacity=0.8,
+                        color='rgba(0,0,0,0)',
+                        line=dict(
+                            color='black',
+                            width=2
+                        ),
+                        symbol='circle'
+                )
             )
         ],
         layout=go.Layout(
@@ -217,26 +235,24 @@ def create_update_buttons(num_pe_params):
     return buttons
 
 
-def create_residuals_traces(result, x_data, y_data, TG0, atg, A, b_values, left_boundary, right_boundary):
-    num_params = len(result.params)
-    param_values = [np.linspace(0, 1000, 100) for _ in range(num_params)]
-    fixed_params = result.params.valuesdict()
+def create_residuals_traces(param_dict, x_data, y_data, TG0, atg, A, b_values, left_boundary, right_boundary):
+    param_values = {param: np.linspace(0, 1000, 100) for param in param_dict}
+    fixed_params = param_dict.copy()
 
     traces = []
-    for i, param_name in enumerate(result.params):
+    for i, param_name in enumerate(param_dict):
         residuals_param = []
-        for param_val in param_values[i]:
+        for param_val in param_values[param_name]:
             params_dict = fixed_params.copy()
             params_dict[param_name] = param_val
-            res = residuals_(params_dict, x_data, y_data, 100000, TG0, atg, A, b_values, left_boundary,
-                             right_boundary)
+            res = residuals_(params_dict, x_data, y_data, 100000, TG0, atg, A, b_values, left_boundary, right_boundary)
             residuals_param.append(np.sum(res ** 2))
 
         traces.append(go.Scatter(
-            x=param_values[i],
+            x=param_values[param_name],
             y=residuals_param,
             mode='lines',
-            name=f'Pe_{i + 1}',
+            name=param_name,
             visible=(i == 0)
         ))
 

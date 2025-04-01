@@ -1,8 +1,8 @@
 import dash
 from dash.dependencies import Input, Output
-from block.calculates import perform_optimization
+from calculates_block.calculates import perform_optimization
 from components.boundaries import extract_boundaries
-from optimizator.intervals import get_boundaries
+from regression.intervals import get_boundaries
 from optimizator.optimizer import generate_data
 
 def register_cache_callback(app):

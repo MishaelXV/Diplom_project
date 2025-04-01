@@ -1,37 +1,9 @@
 from lmfit import minimize, Parameters
 import numpy as np
 import pandas as pd
-from block.block import calculate_TsGLin_array, TsGLin
+from calculates_block.utils import main_func
 
 rng = np.random.default_rng(42)
-
-def main_func(params, z, zInf, TG0, atg, A, Pe, b, c):
-    TsGLin_array = calculate_TsGLin_array(c, zInf, TG0, atg, A, Pe, b, 0)
-    result = np.full_like(z, np.nan, dtype=float)
-
-    result = np.where(
-        (z >= b[0]) & (z < c[0]),
-        TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{1}', 0.0)), b[0], TsGLin_array[0]),
-        result
-    )
-
-    for i in range(len(c) - 1):
-        result = np.where(
-            (z >= c[i]) & (z < b[i + 1]),
-            TsGLin_array[i + 1],
-            result
-        )
-
-        result = np.where(
-            (z >= b[i + 1]) & (z < c[i + 1]),
-            TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{i + 2}', 0.0)), b[i + 1], TsGLin_array[i + 1]),
-            result
-        )
-
-    result = np.where(z >= c[-1], TsGLin_array[-1], result)
-
-    return result
-
 
 def residuals_(params, x, y, zInf, TG0, atg, A, Pe, b, c):
     return main_func(params, x, zInf, TG0, atg, A, Pe, b, c) - y

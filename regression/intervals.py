@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt
-from block.block import TsGLin, calculate_TsGLin_array
+from calculates_block.calculates import TsGLin, calculate_TsGLin_array
 from sklearn.linear_model import LinearRegression
 
 def calculate_temperature(left_boundary, right_boundary, Pe, N, TsGLin_array, TG0, atg, A):
@@ -85,7 +85,7 @@ def get_interval_boundaries(filtered_intervals, z_all):
 
 
 # Функция для визуализации данных и интервалов
-def plot_data(z_all, T_all, T_noisy, T_smooth, left_boundaries, right_boundaries, start_indices, end_indices):
+def plot_data(z_all, T_all, T_noisy, T_smooth, start_indices, end_indices):
     plt.figure(figsize=(10, 5))
     plt.plot(z_all, T_all, label="Исходная кривая")
     plt.plot(z_all, T_noisy, label="Шумная кривая", alpha=0.5)
