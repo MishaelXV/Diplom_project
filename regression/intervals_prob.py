@@ -6,7 +6,21 @@ from sklearn.linear_model import LinearRegression
 
 
 def smooth_data(T_all):
-    return medfilt(T_all, kernel_size=25)
+    n_points = len(T_all)
+
+    if n_points < 50:
+        window_size = 3
+    elif n_points < 200:
+        window_size = 21
+    elif n_points < 1000:
+        window_size = min(51, int(n_points * 0.1) // 2 * 2 + 1)
+    else:
+        window_size = 101
+
+    window_size = min(window_size, n_points)
+    window_size = window_size if window_size % 2 == 1 else window_size - 1
+
+    return medfilt(T_all, kernel_size=window_size)
 
 
 def find_growth_intervals(T_smooth, z_all, sigma):
@@ -14,10 +28,11 @@ def find_growth_intervals(T_smooth, z_all, sigma):
 
     if sigma == 0:
         dTdz = np.gradient(T_smooth, z_all)
-        filtered_intervals = dTdz > 1e-10
+        threshold = np.max(np.abs(dTdz)) * 1e-6
+        filtered_intervals = dTdz > threshold
     else:
-        window_size = 7
-        min_slope = 0.5
+        window_size = 5
+        min_slope = 0.4
 
         for i in range(len(z_all) - window_size):
             z_window = np.array(z_all[i:i + window_size]).reshape(-1, 1)
@@ -96,42 +111,52 @@ def get_boundaries(boundary_dict, Pe, N, sigma, TG0, atg, A):
     return left_boundaries_original, right_boundaries_original, z_norm, T_true_norm, T_noisy_norm, T_smooth, start_indices, end_indices
 
 
-def calculate_error_percentage(true_left, true_right, found_left, found_right):
+def validate_inputs(true_left, true_right, found_left, found_right):
     if not all(isinstance(lst, (list, tuple)) for lst in [true_left, true_right, found_left, found_right]):
         print("Ошибка: все входные данные должны быть списками или кортежами")
-        return None
+        return False
 
     if len(true_left) != len(found_left) or len(true_right) != len(found_right):
         print("Предупреждение: количество найденных границ не совпадает с истинными")
-        return None
+        return False
 
     if not true_left or not true_right:
         print("Ошибка: пустые списки границ")
-        return None
+        return False
 
-    def calculate_errors(true_vals, found_vals):
-        errors = []
-        for t, f in zip(true_vals, found_vals):
-            try:
-                if t == 0:
-                    errors.append(abs(f) * 100)
-                else:
-                    errors.append((abs(t - f) / t) * 100)
-            except TypeError:
-                print(f"Ошибка: нечисловые значения в данных ({t}, {f})")
-                return None
-        return errors
+    return True
 
-    left_errors = calculate_errors(true_left, found_left)
-    right_errors = calculate_errors(true_right, found_right)
 
+def calculate_single_boundary_errors(true_vals, found_vals):
+    errors = []
+    for t, f in zip(true_vals, found_vals):
+        try:
+            if t == 0:
+                errors.append(abs(f) * 100)
+            else:
+                errors.append((abs(t - f) / t) * 100)
+        except TypeError:
+            print(f"Ошибка: нечисловые значения в данных ({t}, {f})")
+            return None
+    return errors
+
+
+def calculate_average_error(left_errors, right_errors):
     if left_errors is None or right_errors is None:
         return None
 
     total_errors = left_errors + right_errors
-    avg_error = sum(total_errors) / len(total_errors)
+    return sum(total_errors) / len(total_errors)
 
-    return avg_error
+
+def calculate_error_percentage(true_left, true_right, found_left, found_right):
+    if not validate_inputs(true_left, true_right, found_left, found_right):
+        return None
+
+    left_errors = calculate_single_boundary_errors(true_left, found_left)
+    right_errors = calculate_single_boundary_errors(true_right, found_right)
+
+    return calculate_average_error(left_errors, right_errors)
 
 
 def plot_data(z_norm, T_true_norm, T_noisy_norm, T_smooth, start_indices, end_indices):
@@ -161,9 +186,6 @@ def calculate_boundary_errors(true_left, true_right, found_left, found_right):
     # Суммарное отклонение (MAE)
     total_error = np.sum(left_errors) + np.sum(right_errors)
 
-    # Альтернатива: MSE
-    # total_error = np.sum(left_errors**2) + np.sum(right_errors**2)
-
     individual_errors = {
         'left_errors': left_errors.tolist(),
         'right_errors': right_errors.tolist()
@@ -176,7 +198,7 @@ if __name__ == "__main__":
     boundary_dict = {'left': [0, 150, 300],
                      'right': [100, 250, 400]}
     Pe = [3000, 1000, 0]
-    N = 100
+    N = 200
     sigma = 0.0001
     TG0 = 1
     atg = 0.0001
