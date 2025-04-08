@@ -132,3 +132,51 @@ def prepare_dataframe_2(df_history):
     df_history = df_history.reset_index()
     df_history.rename(columns={'index': 'Итерация'}, inplace=True)
     return df_history
+
+def calculate_temperature(left_boundary, right_boundary, Pe, N, TsGLin_array, TG0, atg, A):
+    z_all = []
+    T_all = []
+
+    for j in range(len(Pe)):
+        z = np.linspace(left_boundary[j], right_boundary[j], N)
+        T_list = [TsGLin([z_val], 100000, TG0, atg, A, Pe[j], left_boundary[j], TsGLin_array[j]) for z_val in z]
+        T = [item[0] for item in T_list]
+
+        z_all.extend(z)
+        T_all.extend(T)
+
+        if j < len(Pe) - 1:
+            y_value = TsGLin_array[j + 1]
+            start_point = right_boundary[j] + 1e-6
+            end_point = left_boundary[j + 1]
+            z_horizontal = np.linspace(start_point, end_point, N)
+            T_all.extend([y_value] * len(z_horizontal))
+            z_all.extend(z_horizontal)
+
+    return z_all, T_all
+
+
+def get_interval_boundaries(filtered_intervals, z_all):
+    start_indices = []
+    end_indices = []
+    left_boundaries = []
+    right_boundaries = []
+    in_interval = False
+
+    for i in range(1, len(z_all)):
+        if filtered_intervals[i] and not in_interval:
+            start_indices.append(i - 1)
+            left_boundaries.append(z_all[i - 1])
+            in_interval = True
+        elif not filtered_intervals[i] and in_interval:
+            end_indices.append(i - 1)
+            right_boundaries.append(z_all[i - 1])
+            in_interval = False
+
+    if end_indices and end_indices[-1] < len(z_all) - 1:
+        end_indices[-1] = len(z_all) - 1
+        right_boundaries[-1] = z_all[-1]
+
+    return left_boundaries, right_boundaries, start_indices, end_indices
+
+

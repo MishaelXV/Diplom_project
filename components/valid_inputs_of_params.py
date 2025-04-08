@@ -24,3 +24,19 @@ def validate_inputs(a, b_values, boundary_values, A, TG0, atg, sigma):
         raise ValueError("Количество значений b не соответствует количеству интервалов")
 
     return b_values, left_boundary, right_boundary
+
+
+def validate_inputs_2(true_left, true_right, found_left, found_right):
+    if not all(isinstance(lst, (list, tuple)) for lst in [true_left, true_right, found_left, found_right]):
+        print("Ошибка: все входные данные должны быть списками или кортежами")
+        return False
+
+    if len(true_left) != len(found_left) or len(true_right) != len(found_right):
+        print("Предупреждение: количество найденных границ не совпадает с истинными")
+        return False
+
+    if not true_left or not true_right:
+        print("Ошибка: пустые списки границ")
+        return False
+
+    return True
