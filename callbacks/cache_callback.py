@@ -1,9 +1,9 @@
 import dash
 from dash.dependencies import Input, Output
-from calculates_block.calculates import perform_optimization
+from optimizator.optimizer import run_optimization
 from components.boundaries import extract_boundaries
 from regression.intervals import get_boundaries
-from optimizator.optimizer import generate_data
+from calculates_block.data import generate_data_optim
 
 def register_cache_callback(app):
     @app.callback(
@@ -25,12 +25,9 @@ def register_cache_callback(app):
 
         left, right = get_boundaries(boundary_data, b_values, N, sigma, TG0, atg, A)
         left_true, right_true = extract_boundaries(boundary_data)
+        result, param_history, df_history, x_data, y_data = run_optimization(left, right, b_values, 100000, TG0, atg, A, sigma, N)
 
-        result, param_history, df_history, x_data, y_data = perform_optimization(
-            left, right, b_values, TG0, atg, A, sigma, N
-        )
-
-        x_data_true, y_data_true = generate_data(left_true, right_true, b_values, 1000000, TG0, atg, A, sigma, N)
+        x_data_true, y_data_true = generate_data_optim(left_true, right_true, b_values, 1000000, TG0, atg, A, sigma, N)
 
         boundaries_cache = {
             'left': left,

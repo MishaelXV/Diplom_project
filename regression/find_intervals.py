@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
 from sklearn.linear_model import LinearRegression
 from calculates_block.calculates import get_interval_boundaries
 from calculates_block.data import smooth_data, generate_data
 from regression.metrics import calculate_error_percentage, calculate_boundary_errors
-from regression.trainer import predict_params, train_models
+from regression.optuna_search import predict_params, train_models
 
 def find_growth_intervals(T_smooth, z_all, sigma, model_ws, model_ms, Pe0, A, N):
     filtered_intervals = np.zeros_like(T_smooth, dtype=bool)
@@ -29,6 +30,7 @@ def find_growth_intervals(T_smooth, z_all, sigma, model_ws, model_ms, Pe0, A, N)
 
     return filtered_intervals
 
+
 def get_boundaries(boundary_dict, Pe, N, sigma, TG0, atg, A, model_ws, model_ms):
     left_boundary = boundary_dict['left']
     right_boundary = boundary_dict['right']
@@ -51,6 +53,7 @@ def get_boundaries(boundary_dict, Pe, N, sigma, TG0, atg, A, model_ws, model_ms)
 
     return left_boundaries_original, right_boundaries_original, z_norm, T_true_norm, T_noisy_norm, T_smooth, start_indices, end_indices
 
+
 def plot_data(z_norm, T_true_norm, T_noisy_norm, T_smooth, start_indices, end_indices):
     plt.figure(figsize=(10, 5))
     plt.plot(z_norm, T_true_norm, label="Нормированная исходная кривая", marker='o', markersize=3, linestyle='-',
@@ -67,17 +70,25 @@ def plot_data(z_norm, T_true_norm, T_noisy_norm, T_smooth, start_indices, end_in
     plt.legend()
     plt.show()
 
+
 if __name__ == "__main__":
     boundary_dict = {'left': [0, 150, 300],
                      'right': [100, 250, 400]}
     Pe = [5000, 2000, 0]
-    N = 150
+    N = 100
     sigma = 0.001
     TG0 = 1
     atg = 0.0001
-    A = 10
+    A = 5
 
-    df = pd.read_csv("/Users/macbookmike_1/PycharmProjects/PythonProject/regression/training_data.txt", sep="\t")
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    RELATIVE_PATH = os.path.join('regression', 'training_data.txt')
+
+    FULL_PATH = os.path.join(BASE_DIR, RELATIVE_PATH)
+
+    df = pd.read_csv(FULL_PATH, sep='\t')
+
     model_ws, model_ms = train_models(df)
 
     found_left, found_right, z_norm, T_true_norm, T_noisy_norm, T_smooth, start_indices, end_indices = get_boundaries(
@@ -88,14 +99,12 @@ if __name__ == "__main__":
     error_percentage = calculate_error_percentage(boundary_dict['left'], boundary_dict['right'], found_left, found_right)
 
     total_error_mae, individual_errors = calculate_boundary_errors(
-        boundary_dict['left'], boundary_dict['right'], found_left, found_right
-    )
+        boundary_dict['left'], boundary_dict['right'], found_left, found_right)
 
     left_errors = np.array(individual_errors['left_errors'])
     right_errors = np.array(individual_errors['right_errors'])
     total_error_mse = np.sum(left_errors ** 2) + np.sum(right_errors ** 2)
 
-    # Вывод результатов в терминал
     print("\nРезультаты оценки точности:")
     print("=" * 40)
     print(f"Найденные левые границы: {found_left}")

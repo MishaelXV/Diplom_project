@@ -106,19 +106,9 @@ def round_mantissa(value, decimals=5):
     return float(formatted)
 
 
-def perform_optimization(left_boundary, right_boundary, b_values, TG0, atg, A, sigma, N):
-    return run_optimization(left_boundary, right_boundary, b_values, 100000, TG0, atg, A, sigma, N)
-
-
 def add_noise_to_temperature(T_all, sigma):
     noise = np.random.normal(loc=0, scale=sigma, size=len(T_all))
     return np.array(T_all) + noise
-
-
-def save_temperature_values(T_all, file_path):
-    with open(file_path, 'w') as file:
-        for value in T_all:
-            file.write(f"{value}\n")
 
 
 def prepare_dataframe(df_history):
@@ -132,6 +122,7 @@ def prepare_dataframe_2(df_history):
     df_history = df_history.reset_index()
     df_history.rename(columns={'index': 'Итерация'}, inplace=True)
     return df_history
+
 
 def calculate_temperature(left_boundary, right_boundary, Pe, N, TsGLin_array, TG0, atg, A):
     z_all = []
@@ -147,7 +138,7 @@ def calculate_temperature(left_boundary, right_boundary, Pe, N, TsGLin_array, TG
 
         if j < len(Pe) - 1:
             y_value = TsGLin_array[j + 1]
-            start_point = right_boundary[j] + 1e-6
+            start_point = right_boundary[j]
             end_point = left_boundary[j + 1]
             z_horizontal = np.linspace(start_point, end_point, N)
             T_all.extend([y_value] * len(z_horizontal))

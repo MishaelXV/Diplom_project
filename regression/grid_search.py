@@ -5,12 +5,13 @@ from tqdm import tqdm
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from regression.intervals_prob import generate_data_2, get_interval_boundaries, calculate_boundary_errors, smooth_data
-
+from calculates_block.calculates import get_interval_boundaries
+from calculates_block.data import smooth_data, generate_data
+from regression.metrics import calculate_boundary_errors
 
 def evaluate_pipeline(regression_window_size, min_slope, Pe, A, sigma, N, boundary_dict, TG0=1, atg=0.0001, zInf=100000):
     try:
-        z_norm, T_true_norm, T_noisy_norm, z_all, T_true, T_noisy = generate_data_2(
+        z_norm, T_true_norm, T_noisy_norm, z_all, T_true, T_noisy = generate_data(
             boundary_dict['left'], boundary_dict['right'], Pe, zInf, TG0, atg, A, sigma, N)
 
         T_smooth = smooth_data(T_noisy_norm)
@@ -105,7 +106,6 @@ def predict_params(Pe0, A, sigma, N, model_ws, model_ms):
     return int(round(ws)), round(ms, 3)
 
 
-# Запуск
 if __name__ == "__main__":
     df = collect_training_data()
     df.to_csv("training_data_grid.txt", sep="\t", index=False)

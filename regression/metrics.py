@@ -40,7 +40,6 @@ def calculate_boundary_errors(true_left, true_right, found_left, found_right):
     left_errors = np.abs(np.array(true_left) - np.array(found_left))
     right_errors = np.abs(np.array(true_right) - np.array(found_right))
 
-    # Суммарное отклонение (MAE)
     total_error = np.sum(left_errors) + np.sum(right_errors)
 
     individual_errors = {

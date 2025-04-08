@@ -1,7 +1,8 @@
 import dash
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
-from calculates_block.calculates import add_noise_to_temperature, calculate_temperatures, save_temperature_values
+from calculates_block.calculates import add_noise_to_temperature, calculate_temperatures
+from calculates_block.data import save_temperature_values
 from components.graphs import create_figure_direct_task
 from components.valid_inputs_of_params import validate_inputs
 from calculates_block.calculates import calculate_TsGLin_array
@@ -28,7 +29,7 @@ def register_direct_task_callback(app):
 
             T_all_noisy = add_noise_to_temperature(T_all, sigma)
 
-            save_temperature_values(T_all, '/Users/macbookmike_1/PycharmProjects/PythonProject/tests/data/values/temperatura_values.txt')
+            save_temperature_values(T_all, 'temperatura_values.txt')
 
             fig = create_figure_direct_task(z_all, T_all, T_all_noisy, left_boundary, right_boundary, TG0, atg, a)
 

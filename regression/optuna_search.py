@@ -2,6 +2,8 @@ import itertools
 import numpy as np
 import pandas as pd
 import optuna
+from matplotlib import pyplot as plt
+from sklearn.tree import plot_tree
 from tqdm import tqdm
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
@@ -111,8 +113,23 @@ def train_models(df):
     X_train, X_test, y_ws_train, y_ws_test = train_test_split(X, y_ws, test_size=0.2, random_state=42)
     _, _, y_ms_train, y_ms_test = train_test_split(X, y_ms, test_size=0.2, random_state=42)
 
-    model_ws = GradientBoostingRegressor().fit(X_train, y_ws_train)
-    model_ms = GradientBoostingRegressor().fit(X_train, y_ms_train)
+    model_ws = GradientBoostingRegressor(random_state=42)
+    model_ws.fit(X_train, y_ws_train)
+
+    plt.figure(figsize=(20, 12))
+    for i in range(4):
+        plt.subplot(2, 2, i + 1)
+        plot_tree(model_ws.estimators_[i][0],
+                  feature_names=X.columns,
+                  filled=True,
+                  rounded=True)
+        plt.title(f'Decision Tree {i + 1} in Gradient Boosting Ensemble')
+
+    plt.tight_layout()
+    plt.show()
+
+    model_ms = GradientBoostingRegressor(random_state=42)
+    model_ms.fit(X_train, y_ms_train)
 
     return model_ws, model_ms
 
@@ -122,7 +139,6 @@ def predict_params(Pe0, A, sigma, N, model_ws, model_ms):
     ws = model_ws.predict(x_input)[0]
     ms = model_ms.predict(x_input)[0]
     return int(round(ws)), round(ms, 3)
-
 
 
 # df = collect_training_data()

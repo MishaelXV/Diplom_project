@@ -1,37 +1,19 @@
 from lmfit import minimize, Parameters
 import numpy as np
 import pandas as pd
+from calculates_block.data import generate_data_optim
 from calculates_block.main_functions import main_func
-
-rng = np.random.default_rng(42)
 
 def residuals_(params, x, y, zInf, TG0, atg, A, Pe, b, c):
     return main_func(params, x, zInf, TG0, atg, A, Pe, b, c) - y
 
 
-def generate_data(b, c, Pe, zInf, TG0, atg, A, sigma, N):
-    x_data = np.linspace(b[0], c[-1], N)
-    y_data = main_func({f'Pe_{i + 1}': Pe[i] for i in range(len(Pe) - 1)}, x_data, zInf, TG0, atg, A, Pe, b, c) + rng.normal(0, sigma, x_data.size)
-    return x_data, y_data
-
-
 def compute_relative_error(param_history, true_Pe):
-    if not param_history or not true_Pe:
-        print("Ошибка: пустые входные данные")
-        return float('nan')
-
     last_params = param_history[-1][0]
 
     num_pe = len([k for k in last_params.keys() if k.startswith('Pe_')])
-    if num_pe == 0:
-        print("Ошибка: не найдены параметры Pe")
-        return float('nan')
 
     predicted_Pe = np.array([last_params[f'Pe_{i + 1}'] for i in range(num_pe)])
-
-    if len(true_Pe) < num_pe:
-        print(f"Ошибка: true_Pe содержит {len(true_Pe)} элементов, но ожидается {num_pe}")
-        return float('nan')
 
     true_Pe_array = np.array(true_Pe[:num_pe])
 
@@ -63,7 +45,7 @@ def run_optimization(b, c, Pe, zInf, TG0, atg, A, sigma, N):
     def residuals(params, x, y):
         return main_func(params, x, zInf, TG0, atg, A, Pe, b, c) - y
 
-    x_data, y_data = generate_data(b, c, Pe, zInf, TG0, atg, A, sigma, N)
+    x_data, y_data = generate_data_optim(b, c, Pe, zInf, TG0, atg, A, sigma, N)
     params = create_parameters(Pe)
 
     param_history = []

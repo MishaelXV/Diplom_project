@@ -26,6 +26,8 @@ def register_error_callback(app):
 
         return html.Div([
             html.H4("Результаты расчета погрешностей:"),
+            html.P(f"Заданные границы: {boundaries_data['left_true'], boundaries_data['right_true']}"),
+            html.P(f"Найденные границы: {boundaries_data['left'], boundaries_data['right']}"),
             html.P(f"Погрешность регрессии: {regression_error:.2f}%"),
             html.P(f"Погрешность оптимизации: {optimizator_error:.2f}%"),
             html.P(f"RMSE: {np.sqrt(regression_error*regression_error + optimizator_error*optimizator_error):.2f}%"),
