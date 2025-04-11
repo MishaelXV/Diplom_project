@@ -1,6 +1,5 @@
-from dash.dependencies import Input, Output, State
 import plotly.io as pio
-
+from dash.dependencies import Input, Output, State
 
 pio.templates.default = "seaborn"
 

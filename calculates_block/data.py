@@ -6,7 +6,7 @@ from pathlib import Path
 def save_temperature_values(T_all, filename):
     project_root = Path(__file__).parent.parent.parent
 
-    target_dir = project_root / "tests" / "data" / "values"
+    target_dir = project_root / "stability_tests" / "data" / "values"
 
     target_dir.mkdir(parents=True, exist_ok=True)
 

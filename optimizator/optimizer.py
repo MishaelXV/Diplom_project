@@ -1,6 +1,6 @@
-from lmfit import minimize, Parameters
 import numpy as np
 import pandas as pd
+from lmfit import minimize, Parameters
 from calculates_block.data import generate_data_optim
 from calculates_block.main_functions import main_func
 

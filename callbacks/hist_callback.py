@@ -1,5 +1,5 @@
-from dash.dependencies import Input, Output
 import plotly.graph_objects as go
+from dash.dependencies import Input, Output
 from components.graphs import create_histogram
 
 def register_hist_callback(app):

@@ -1,5 +1,4 @@
 import numpy as np
-from optimizator.optimizer import run_optimization
 import mpmath
 
 def TsGLin(z, zInf, TG0, atg, A, Pe, zl, Tl):

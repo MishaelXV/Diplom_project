@@ -1,7 +1,7 @@
 import dash
 import numpy as np
-from dash.dependencies import Input, Output
 import plotly.graph_objects as go
+from dash.dependencies import Input, Output
 from components.graphs import create_residuals_traces, create_update_res_buttons
 
 def register_residuals_callback(app):

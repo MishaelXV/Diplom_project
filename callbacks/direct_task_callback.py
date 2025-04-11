@@ -1,6 +1,6 @@
 import dash
-from dash.dependencies import Input, Output
 import plotly.graph_objects as go
+from dash.dependencies import Input, Output
 from calculates_block.calculates import add_noise_to_temperature, calculate_temperatures
 from calculates_block.data import save_temperature_values
 from components.graphs import create_figure_direct_task

@@ -3,8 +3,8 @@ from dash import dash_table
 
 # Начальные значения параметров
 a_initial = 1
-b_values_initial = [200]
-A_initial = 1
+b_values_initial = [2000]
+A_initial = 5
 TG0_initial = 1
 atg_initial = 0.0001
 sigma_initial = 0.001

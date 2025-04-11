@@ -1,8 +1,7 @@
+import numpy as np
 from dash import html
 from dash.dependencies import Input, Output
-from regression.intervals import calculate_error_percentage
 from optimizator.optimizer import compute_relative_error
-import numpy as np
 
 def register_error_callback(app):
     @app.callback(

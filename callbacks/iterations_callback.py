@@ -1,8 +1,8 @@
-from dash.dependencies import Input, Output
+import pandas as pd
 import plotly.graph_objects as go
+from dash.dependencies import Input, Output
 from calculates_block.calculates import prepare_dataframe_2
 from components.graphs import create_iterations_traces, create_update_buttons
-import pandas as pd
 
 def register_iterations_callback(app):
     @app.callback(

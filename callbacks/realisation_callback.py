@@ -1,5 +1,5 @@
-from dash.dependencies import Input, Output
 import time
+from dash.dependencies import Input, Output
 
 def register_realisation_callback(app):
     @app.callback(
@@ -10,7 +10,7 @@ def register_realisation_callback(app):
         if not n_clicks:
             return {'display': 'none'}
         else:
-            time.sleep(8),
+            time.sleep(4),
             return {
                 'display': 'flex',
                 'flexDirection': 'row',

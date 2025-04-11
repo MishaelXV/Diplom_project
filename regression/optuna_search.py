@@ -45,8 +45,8 @@ def evaluate_pipeline(regression_window_size, min_slope, Pe, A, sigma, N, bounda
         return None
 
 
-def objective(trial, Pe, A, sigma, N, boundary_dict, n_repeats=50):
-    window_size = trial.suggest_int("window_size", 3, 21)
+def objective(trial, Pe, A, sigma, N, boundary_dict, n_repeats=5):
+    window_size = trial.suggest_int("window_size", 1, 21)
     min_slope = trial.suggest_float("min_slope", 0.01, 1.2)
 
     errors = []
@@ -61,7 +61,7 @@ def objective(trial, Pe, A, sigma, N, boundary_dict, n_repeats=50):
     return np.mean(errors)
 
 
-def optimize_params(Pe, A, sigma, N, boundary_dict, n_repeats=50):
+def optimize_params(Pe, A, sigma, N, boundary_dict, n_repeats=5):
     study = optuna.create_study(direction="minimize")
 
     study.optimize(lambda trial: objective(trial, Pe, A, sigma, N, boundary_dict, n_repeats), n_trials=50,
@@ -116,17 +116,17 @@ def train_models(df):
     model_ws = GradientBoostingRegressor(random_state=42)
     model_ws.fit(X_train, y_ws_train)
 
-    plt.figure(figsize=(20, 12))
-    for i in range(4):
-        plt.subplot(2, 2, i + 1)
-        plot_tree(model_ws.estimators_[i][0],
-                  feature_names=X.columns,
-                  filled=True,
-                  rounded=True)
-        plt.title(f'Decision Tree {i + 1} in Gradient Boosting Ensemble')
-
-    plt.tight_layout()
-    plt.show()
+    # plt.figure(figsize=(20, 12))
+    # for i in range(4):
+    #     plt.subplot(2, 2, i + 1)
+    #     plot_tree(model_ws.estimators_[i][0],
+    #               feature_names=X.columns,
+    #               filled=True,
+    #               rounded=True)
+    #     plt.title(f'Decision Tree {i + 1} in Gradient Boosting Ensemble')
+    #
+    # plt.tight_layout()
+    # plt.show()
 
     model_ms = GradientBoostingRegressor(random_state=42)
     model_ms.fit(X_train, y_ms_train)
