@@ -31,7 +31,8 @@ def detect_growth_with_noise(T_smooth, z_all, window_size, min_slope):
 
 def find_growth_intervals(T_smooth, z_all, sigma, model_ws, model_ms, Pe0, A, N):
     window_size, min_slope = predict_params(Pe0, A, sigma, N, model_ws, model_ms)
-
+    if window_size == 1:
+        window_size += 1
     if sigma == 0:
         return detect_growth_without_noise(T_smooth)
     else:
@@ -166,12 +167,12 @@ def print_metrics(true_left, true_right, found_left, found_right):
 # тестовый пример
 def main():
     boundary_dict = {'left': [0, 150, 300], 'right': [100, 250, 400]}
-    Pe = [5000, 2000, 0]
-    N = 60
+    Pe = [2000, 1000, 0]
+    N = 100
     sigma = 0.001
     TG0 = 1
     atg = 0.0001
-    A = 5
+    A = 10
 
     df = load_training_data()
     model_ws, model_ms = train_models(df)

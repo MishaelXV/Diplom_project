@@ -41,22 +41,34 @@ def create_parameters(Pe):
     return params
 
 
-def run_optimization(b, c, Pe, zInf, TG0, atg, A, sigma, N):
-    def residuals(params, x, y):
-        return main_func(params, x, zInf, TG0, atg, A, Pe, b, c) - y
+def optimization_residuals(params, x, y, zInf, TG0, atg, A, Pe, b, c):
+    return main_func(params, x, zInf, TG0, atg, A, Pe, b, c) - y
 
+
+def optimization_callback(params, iter, resid, param_history):
+    param_values = {param.name: float(param.value) for param in params.values()}
+    chi_squared = float(np.sum(resid ** 2))
+    param_history.append((param_values, chi_squared))
+
+
+def run_optimization(b, c, Pe, zInf, TG0, atg, A, sigma, N):
     x_data, y_data = generate_data_optim(b, c, Pe, zInf, TG0, atg, A, sigma, N)
+
     params = create_parameters(Pe)
 
     param_history = []
 
-    def iter_callback(params, iter, resid, *args, **kwargs):
-        param_values = {param.name: float(param.value) for param in params.values()}
-        chi_squared = float(np.sum(resid ** 2))
-        param_history.append((param_values, chi_squared))
-
-    result = minimize(residuals, params, args=(x_data, y_data), method='leastsq', iter_cb=iter_callback, ftol=1e-15)
+    result = minimize(
+        lambda params, x, y: optimization_residuals(params, x, y, zInf, TG0, atg, A, Pe, b, c),
+        params,
+        args=(x_data, y_data),
+        method='leastsq',
+        iter_cb=lambda params, iter, resid, *args, **kwargs: optimization_callback(params, iter, resid, param_history),
+        ftol=1e-15
+    )
 
     df_history = process_results(param_history)
 
     return result, param_history, df_history, x_data, y_data
+
+
