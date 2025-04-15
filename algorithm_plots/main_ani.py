@@ -373,13 +373,13 @@ def plot_optimization_path(df_history, Pe_true):
 
 if __name__ == "__main__":
     boundary_dict = {'left': [0, 150, 300], 'right': [100, 250, 400]}
-    Pe = [10000, 1000, 0]
+    Pe = [2000, 1000, 0]
     zInf = 100000
     TG0 = 1
     atg = 0.0001
     A = 5
-    sigma = 0.0
-    N = 500
+    sigma = 0.001
+    N = 100
     df = load_training_data()
     model_ws, model_ms = train_models(df)
 
@@ -390,9 +390,8 @@ if __name__ == "__main__":
 
     metric_value = calculate_deviation_metric(optimized_model, x, y)
 
-    ani_optimization_path = plot_optimization_path(df, Pe)
     ani_residuals = plot_animated_residuals(df)
     ani_pe = plot_animated_Pe(df, Pe)
-
     plot_comparison(x, y, optimized_model)
+    ani_optimization_path = plot_optimization_path(df, Pe)
 

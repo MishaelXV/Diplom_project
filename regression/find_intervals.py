@@ -5,7 +5,7 @@ import os
 from sklearn.linear_model import LinearRegression
 from calculates_block.calculates import get_interval_boundaries
 from calculates_block.data import smooth_data, generate_data
-from regression.metrics import calculate_error_percentage, calculate_boundary_errors
+from regression.metrics import calculate_mae, calculate_mse, calculate_rmse, calculate_relative_mae
 from regression.optuna_search import predict_params, train_models
 
 def calculate_window_slope(z_window, T_window):
@@ -29,10 +29,16 @@ def detect_growth_with_noise(T_smooth, z_all, window_size, min_slope):
     return filtered_intervals
 
 
-def find_growth_intervals(T_smooth, z_all, sigma, model_ws, model_ms, Pe0, A, N):
-    window_size, min_slope = predict_params(Pe0, A, sigma, N, model_ws, model_ms)
-    if window_size == 1:
-        window_size += 1
+def find_growth_intervals(T_smooth, z_all, sigma, model_ws=None, model_ms=None, Pe0=None, A=None, N=None,
+                          fixed_ws=None, fixed_ms=None):
+    if fixed_ws is not None and fixed_ms is not None:
+        window_size = int(round(fixed_ws))
+        min_slope = fixed_ms
+    else:
+        window_size, min_slope = predict_params(Pe0, A, sigma, N, model_ws, model_ms)
+
+    if window_size <= 1:
+        window_size = 2
     if sigma == 0:
         return detect_growth_without_noise(T_smooth)
     else:
@@ -104,17 +110,18 @@ def process_detected_boundaries(start_indices, end_indices, z_norm, z_all):
     return left_original, right_original
 
 
-def get_boundaries(boundary_dict, Pe, N, sigma, TG0, atg, A, model_ws, model_ms):
-    if len(boundary_dict['left']) != len(boundary_dict['right']):
-        raise ValueError("Количество левых и правых границ должно совпадать")
-
+def get_boundaries(boundary_dict, Pe, N, sigma, TG0, atg, A, model_ws=None, model_ms=None, fixed_ws=None, fixed_ms=None):
     z_norm, T_true_norm, T_noisy_norm, z_all, T_true, T_noisy = generate_data(
         boundary_dict['left'], boundary_dict['right'], Pe, 100000, TG0, atg, A, sigma, N)
 
     T_smooth = smooth_data(T_noisy_norm)
-    filtered_intervals = find_growth_intervals(T_smooth, z_norm, sigma, model_ws, model_ms, Pe[0], A, N)
-    left, right, starts, ends = get_interval_boundaries(filtered_intervals, z_norm)
+    filtered_intervals = find_growth_intervals(
+        T_smooth, z_norm, sigma,
+        model_ws=model_ws, model_ms=model_ms, Pe0=Pe[0], A=A, N=N,
+        fixed_ws=fixed_ws, fixed_ms=fixed_ms
+    )
 
+    left, right, starts, ends = get_interval_boundaries(filtered_intervals, z_norm)
     starts, ends = postprocess_intervals(starts, ends, z_norm)
     left_original, right_original = process_detected_boundaries(starts, ends, z_norm, z_all)
 
@@ -145,31 +152,35 @@ def load_training_data():
     return pd.read_csv(FULL_PATH, sep='\t')
 
 
-def print_metrics(true_left, true_right, found_left, found_right):
-    error_percentage = calculate_error_percentage(true_left, true_right, found_left, found_right)
-    total_error_mae, individual_errors = calculate_boundary_errors(true_left, true_right, found_left, found_right)
-    left_errors = np.array(individual_errors['left_errors'])
-    right_errors = np.array(individual_errors['right_errors'])
-    total_error_mse = np.sum(left_errors ** 2) + np.sum(right_errors ** 2)
+def print_metrics(true_left, true_right, found_left, found_right, starts=None, ends=None, z_norm=None):
+    mae = calculate_mae(true_left, true_right, found_left, found_right)
+    mse = calculate_mse(true_left, true_right, found_left, found_right)
+    rmse = calculate_rmse(true_left, true_right, found_left, found_right)
+    relative_mae = calculate_relative_mae(true_left, true_right, found_left, found_right)
 
     print("\nРезультаты оценки точности:")
     print("=" * 40)
     print(f"Найденные левые границы: {found_left}")
     print(f"Найденные правые границы: {found_right}")
-    print(f"Средняя относительная погрешность: {error_percentage:.2f}%")
-    print(f"Суммарная абсолютная ошибка (MAE): {total_error_mae:.4f}")
-    print(f"Суммарная квадратичная ошибка (MSE): {total_error_mse:.4f}")
-    print("\nОшибки по границам:")
-    print(f"Левые границы: {individual_errors['left_errors']}")
-    print(f"Правые границы: {individual_errors['right_errors']}")
+
+    # Добавляем вывод нормированных интервалов
+    if starts is not None and ends is not None and z_norm is not None:
+        print("\nНормированные найденные интервалы:")
+        for start, end in zip(starts, ends):
+            print(f"[{z_norm[start]:.4f}, {z_norm[end]:.4f}]")
+
+    print(f"\nСредняя относительная погрешность: {relative_mae}")
+    print(f"Суммарная абсолютная ошибка (MAE): {mae}")
+    print(f"Суммарная квадратичная ошибка (MSE): {mse}")
+    print(f"RMSE: {rmse}")
     print("=" * 40)
 
 # тестовый пример
 def main():
     boundary_dict = {'left': [0, 150, 300], 'right': [100, 250, 400]}
-    Pe = [2000, 1000, 0]
-    N = 100
-    sigma = 0.001
+    Pe = [10000, 5000, 0]
+    N = 400
+    sigma = 0.04
     TG0 = 1
     atg = 0.0001
     A = 10
@@ -181,7 +192,7 @@ def main():
     found_left, found_right, z_norm, T_true_norm, T_noisy_norm, T_smooth, starts, ends = results
 
     plot_data(z_norm, T_true_norm, T_noisy_norm, T_smooth, starts, ends)
-    print_metrics(boundary_dict['left'], boundary_dict['right'], found_left, found_right)
+    print_metrics(boundary_dict['left'], boundary_dict['right'], found_left, found_right, starts, ends, z_norm)
 
 
 if __name__ == "__main__":
