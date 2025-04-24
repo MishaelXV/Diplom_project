@@ -2,21 +2,21 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-# Настройки оформления
-plt.rcParams.update({
-    "font.family": "serif",
-    "font.serif": ["Times New Roman"],
-    "font.size": 14,
-    "axes.labelsize": 16,
-    "axes.titlesize": 18,
-    "legend.fontsize": 13,
-    "xtick.labelsize": 12,
-    "ytick.labelsize": 12,
-    "figure.dpi": 300
-})
-
+def set_plot_style():
+    plt.rcParams.update({
+        "font.family": "serif",
+        "font.serif": ["Times New Roman"],
+        "font.size": 14,
+        "axes.labelsize": 16,
+        "axes.titlesize": 18,
+        "legend.fontsize": 13,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+        "figure.dpi": 300
+    })
 
 def plot_histograms(df, N_samples, output_dir):
+    set_plot_style()
     plt.figure(figsize=(10, 6))
     palette = sns.color_palette("Set2", n_colors=len(N_samples))
 
@@ -50,6 +50,7 @@ def plot_histograms(df, N_samples, output_dir):
 
 
 def plot_mean_differences(df, variables, output_dir):
+    set_plot_style()
     plt.figure(figsize=(10, 6))
     for n in variables["N_samples"]:
         subset = df[df["N_samples"] == n]
@@ -67,6 +68,7 @@ def plot_mean_differences(df, variables, output_dir):
 
 
 def plot_std_deviation(df, variables, output_dir):
+    set_plot_style()
     plt.figure(figsize=(10, 6))
     for n in variables["N_samples"]:
         stds = []
@@ -89,10 +91,11 @@ def plot_std_deviation(df, variables, output_dir):
 
 
 def plot_boxplot(df, output_dir, hue, title):
+    set_plot_style()
     plt.figure(figsize=(10, 6))
     sns.boxplot(
         x="sigma", y="deviation_metric", data=df, hue=hue,
-        palette="muted", showmeans=True)
+        palette="muted")
     plt.title(title, fontsize=18)
     plt.xlabel("Уровень шума σ", fontsize=16)
     plt.ylabel("Площадь отклонения профиля", fontsize=16)
@@ -106,10 +109,11 @@ def plot_boxplot(df, output_dir, hue, title):
 
 
 def plot_violinplot(df, output_dir, hue, title):
+    set_plot_style()
     plt.figure(figsize=(10, 6))
     sns.violinplot(
         x="sigma", y="deviation_metric", hue=hue,
-        data=df, palette="muted", scale="width", inner="box"
+        data=df, palette="muted", density_norm='width', inner="box"
     )
     plt.title(title, fontsize=18)
     plt.xlabel("Уровень шума σ", fontsize=16)
@@ -125,20 +129,7 @@ def plot_violinplot(df, output_dir, hue, title):
 
 
 def plot_barplot(df, output_dir, title="Сравнение методов оптимизации"):
-    plt.rcParams.update({
-        "font.family": "serif",
-        "font.serif": ["Times New Roman"],
-        "font.size": 14,
-        "axes.labelsize": 16,
-        "axes.titlesize": 18,
-        "legend.fontsize": 13,
-        "xtick.labelsize": 12,
-        "ytick.labelsize": 12,
-        "figure.dpi": 300
-    })
-
-    sns.set(style="white")
-
+    set_plot_style()
     df_grouped = df.groupby("Метод оптимизации").agg(
         mean_metric=("deviation_metric", "mean"),
         std_metric=("deviation_metric", "std"),
@@ -195,6 +186,7 @@ def plot_barplot(df, output_dir, title="Сравнение методов опт
 
 
 def plot_applicability_heatmap(df, output_path):
+    set_plot_style()
     # Округляем значения метрики до 2 знаков для группировки
     df["rounded_dev"] = df["mean_deviation"].round(2)
 

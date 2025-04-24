@@ -93,32 +93,11 @@ def remove_short_intervals(start_indices, end_indices, z_norm, min_length=0.01):
     return filtered_starts, filtered_ends
 
 
-def adjust_interval_counts(true_left, found_left, found_right):
-    expected_count = len(true_left)
-    found_count = len(found_left)
-
-    adjusted_left = list(found_left)
-    adjusted_right = list(found_right)
-
-    if found_count > expected_count:
-        indexed_lengths = [(i, r - l) for i, (l, r) in enumerate(zip(adjusted_left, adjusted_right))]
-
-        sorted_lengths = sorted(indexed_lengths, key=lambda x: x[1], reverse=True)
-
-        top_indices = [x[0] for x in sorted_lengths[:expected_count]]
-
-        top_indices_sorted = sorted(top_indices)
-
-        adjusted_left = [found_left[i] for i in top_indices_sorted]
-        adjusted_right = [found_right[i] for i in top_indices_sorted]
-
-    elif found_count < expected_count:
-        missing_count = expected_count - found_count
-        for _ in range(missing_count):
-            adjusted_left.insert(0, 0)
-            adjusted_right.insert(0, 0)
-
-    return adjusted_left, adjusted_right
+def add_zero_boundaries_if_only_one_found(left_boundaries, right_boundaries):
+    if len(left_boundaries) == 1:
+        left_boundaries.insert(0, 0)
+        right_boundaries.insert(0, 10)
+    return left_boundaries, right_boundaries
 
 
 def get_boundaries(x_data, y_data, y_data_noize, Pe, N, sigma, A, model_ws=None, model_ms=None,
@@ -137,7 +116,7 @@ def get_boundaries(x_data, y_data, y_data_noize, Pe, N, sigma, A, model_ws=None,
     starts, ends = remove_short_intervals(starts, ends, z_norm, min_length=0.01)
     left_boundaries, right_boundaries = process_detected_boundaries(starts, ends, z_norm, x_data)
     # left_boundaries, right_boundaries = adjust_interval_counts(boundary_dict['left'], left_boundaries, right_boundaries)
-
+    left_boundaries, right_boundaries = add_zero_boundaries_if_only_one_found(left_boundaries, right_boundaries)
     return left_boundaries, right_boundaries
 
 
@@ -157,13 +136,13 @@ def plot_data(z_norm, T_smooth, start_indices, end_indices):
 
 # тестовый пример
 def main():
-    boundary_dict = {'left': [0, 150, 300, 450], 'right': [100, 250, 350, 600]}
-    Pe = [2000, 1000, 500, 0]
+    boundary_dict = {'left': [0, 150, 300], 'right': [100, 250, 350]}
+    Pe = [20000, 10000, 0]
     N = 500
-    sigma = 0.03
+    sigma = 0.05
     TG0 = 1
     atg = 0.0001
-    A = 5
+    A = 2
 
     x_data, y_data = generate_data(boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, N)
     y_data_noize = noize_data(y_data, sigma)

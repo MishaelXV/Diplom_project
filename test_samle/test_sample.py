@@ -18,12 +18,11 @@ plt.rcParams.update({
 })
 
 #Константы
-boundary_dict = {'left': [0, 150, 300, 450], 'right': [100, 250, 350, 500]}
-Pe = [5000, 1000, 500,  0]
-zInf = 100000
+boundary_dict = {'left': [0, 150, 300, 400], 'right': [100, 250, 350, 600]}
+Pe = [5000, 1000, 500, 0]
 atg = 0.0001
 TG0 = 1
-A = 6
+A = 5
 sigma = 0.001
 N = 500
 
@@ -33,17 +32,25 @@ def main():
     y_data_noize = noize_data(y_data, sigma)
 
     found_left, found_right = get_boundaries(x_data, y_data, y_data_noize, Pe, N, sigma, A, model_ws, model_ms)
+    print(found_left, found_right)
+    if len(found_left) <= 2:
+        Pe_opt = [Pe[0], 0]
+        y_temp = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
 
-    result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
-                                          boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
+        metric = calculate_deviation_metric(Pe, x_data, found_left, found_right,
+                                            boundary_dict['left'], boundary_dict['right'], Pe)
+    else:
+        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+                                              boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
 
-    Pe_opt = reconstruct_Pe_list(result.params, Pe[0])
-    y_temp = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
+        Pe_opt = reconstruct_Pe_list(result.params, Pe[0])
+        y_temp = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
 
-    metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
-                                        boundary_dict['left'], boundary_dict['right'], Pe)
+        metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
+                                            boundary_dict['left'], boundary_dict['right'], Pe)
+        print(df_history)
+
     print(metric)
-    print(df_history)
 
     fig, (ax_leak, ax_temp) = plt.subplots(2, 1, figsize=(10, 8), sharex=True,
                                            gridspec_kw={'height_ratios': [1, 2], 'hspace': 0.05})

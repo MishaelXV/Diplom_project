@@ -22,9 +22,7 @@ def register_direct_task_callback(app):
     def update_graph(a, b_values, boundary_values, A, TG0, atg, sigma, N):
         try:
             b_values, left_boundary, right_boundary = validate_inputs(a, b_values, boundary_values, A, TG0, atg, sigma)
-
-            TsGLin_array = calculate_TsGLin_array(right_boundary, 100000, TG0, atg, A, b_values, left_boundary, 0)
-
+            TsGLin_array = calculate_TsGLin_array(right_boundary, TG0, atg, A, b_values, left_boundary, 0)
             z_all, T_all = calculate_temperatures(a, left_boundary, right_boundary, N, TG0, atg, A, b_values, TsGLin_array)
 
             T_all_noisy = add_noise_to_temperature(T_all, sigma)

@@ -1,8 +1,8 @@
 import plotly.graph_objects as go
 import numpy as np
-from calculates_block.calculates import geoterma
-from calculates_block.calculates import main_func
-from optimizator.optimizer import residuals_
+from calculates_block.main_functions import geoterma
+from calculates_block.main_functions import main_func
+from optimizator.optimizer import optimization_residuals
 
 def create_figure_direct_task(z_all, T_all, T_all_noisy, left_boundary, right_boundary, TG0, atg, a):
     fig = go.Figure()
@@ -245,7 +245,7 @@ def create_residuals_traces(param_dict, x_data, y_data, TG0, atg, A, b_values, l
         for param_val in param_values[param_name]:
             params_dict = fixed_params.copy()
             params_dict[param_name] = param_val
-            res = residuals_(params_dict, x_data, y_data, 100000, TG0, atg, A, b_values, left_boundary, right_boundary)
+            res = optimization_residuals(params_dict, x_data, y_data, 100000, TG0, atg, A, b_values, left_boundary, right_boundary)
             residuals_param.append(np.sum(res ** 2))
 
         traces.append(go.Scatter(

@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import warnings
 import time
+import matplotlib.pyplot as plt
 from tqdm import tqdm
 from lmfit import minimize
 from joblib import Parallel, delayed
@@ -16,6 +17,17 @@ from stability_tests.plots import plot_boxplot, plot_violinplot, plot_mean_diffe
     plot_std_deviation, plot_barplot, plot_applicability_heatmap
 
 warnings.filterwarnings('ignore', category=RuntimeWarning)
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman"],
+    "font.size": 14,
+    "axes.labelsize": 16,
+    "axes.titlesize": 18,
+    "legend.fontsize": 13,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+    "figure.dpi": 300
+})
 
 # Общие константы
 zInf = COMMON_CONSTANTS['zInf']
@@ -94,6 +106,7 @@ def process_optimizer_run(method, sigma, n):
         method=method,
         iter_cb=lambda p, i, r, *a, **kw: optimization_callback(
             p, i, r, param_history, x_data, found_left, found_right, boundary_dict["left"], boundary_dict["right"], Pe),
+        nan_policy='omit'
     )
 
     elapsed_time = time.time() - start_time

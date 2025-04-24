@@ -33,11 +33,15 @@ def create_parameters(boundary, known_pe1):
 
 
 def calculate_deviation_metric(params, z, found_left, found_right, true_left, true_right, Pe_true):
-    Pe_opt = reconstruct_Pe_list(params, Pe_true[0])
+    if len(found_left) <= 2:
+        Pe_opt = [Pe_true[0], 0]
+    else:
+        Pe_opt = reconstruct_Pe_list(params, Pe_true[0])
+
     step_opt = compute_leakage_profile(z, found_left, found_right, Pe_opt)
     step_true = compute_leakage_profile(z, true_left, true_right, Pe_true)
 
-    norm_factor = np.max(np.abs(step_true))  #
+    norm_factor = np.max(np.abs(step_true))
     norm_factor = norm_factor if norm_factor != 0 else 1.0
 
     squared_diff = ((step_opt - step_true) / norm_factor) ** 2
@@ -85,8 +89,7 @@ def run_optimization(x_data, y_data, found_left, found_right, true_left, true_ri
         method='leastsq',
         iter_cb=lambda params, iter, resid, *args, **kwargs: optimization_callback(
             params, iter, resid, param_history, x_data, found_left, found_right, true_left, true_right, Pe),
-        ftol=1e-15,
-        nan_policy='omit'
+        nan_policy='omit',
     )
 
     df_history = process_results(param_history)
