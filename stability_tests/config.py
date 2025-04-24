@@ -4,51 +4,66 @@ STABILITY_CONFIGS = {
     "stability_std_N_samples": {
         "output_dir": "data/charts/stability_std_N_samples",
         "variables": {
-            "sigma_values": np.linspace(0.01, 0.1, 10),
-            "N_samples": [20, 50, 100],
-            "N_rnd": 1
+            "sigma_values": np.linspace(0.0001, 0.001, 10),
+            "N_samples": [200, 300, 400],
+            "N_rnd": 5
         },
         "plots": ["std_deviation", "mean_difference", "histograms"]
     },
     "stability_optimaizers": {
         "output_dir": "data/charts/stability_optimaizers",
         "variables": {
-            "sigma_values": [0.01, 0.05, 0.1],
+            "sigma_values": [0.0001],
             "methods": ['leastsq', 'nelder', 'powell'],
-            "N_samples": 50,
+            "N_samples": 200,
             "N_rnd": 1
         },
-        "plots": ["boxplot", "violinplot"]
+        "plots": ["barplot"]
     },
     "stability_N_samples": {
         "output_dir": "data/charts/stability_N_samples",
         "variables": {
-            "sigma_values": [0.01, 0.05, 0.1],
-            "N_samples": [100, 50, 20],
-            "N_rnd": 1
+            "sigma_values": [0.0001, 0.001, 0.005],
+            "N_samples": [200, 300, 400],
+            "N_rnd": 2
         },
         "plots": ["boxplot", "violinplot"]
     },
     "stability_A": {
         "output_dir": "data/charts/stability_A",
         "variables": {
-            "sigma_values": [0.01, 0.05, 0.1],
-            "A_values": [5, 3, 1],
-            "N_samples": 150,
-            "N_rnd": 1
+            "sigma_values": [0.0001, 0.001, 0.005],
+            "A_values": [10, 5, 3],
+            "N_samples": 500,
+            "N_rnd": 2
         },
         "plots": ["boxplot", "violinplot"]
+    },
+    "stability_applicability_map": {
+        "output_dir": "data/charts/stability_applicability_map",
+        "variables": {
+            "Pe0_values": np.linspace(2000, 10000, 30),
+            "A_values": np.linspace(1, 10, 30),
+            "sigma": 0.001,
+            "N_samples": 200,
+            "N_rnd": 1
+        },
+        "plots": True
     }
 }
 
-
-# Общие константы
 COMMON_CONSTANTS = {
     "zInf": 100000,
     "TG0": 1,
     "atg": 0.0001,
     "A": 5,
-    "b": [0, 150, 300],
-    "c": [100, 250, 400],
-    "Pe": [2000, 1000, 0]
+    "Pe": [2000, 1000, 0],
+    "boundaries": {"left": [0, 150, 300], "right": [100, 250, 400]}
 }
+
+ENABLED_TESTS = [
+"stability_optimaizers",
+"stability_std_N_samples",
+"stability_N_samples",
+"stability_A",
+]

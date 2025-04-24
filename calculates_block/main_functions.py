@@ -33,38 +33,47 @@ def TsGLin(z, zInf, TG0, atg, A, Pe, zl, Tl):
     return results
 
 
-def calculate_TsGLin_array(c, zinf, TG0, atg, A, Pe, b, TsGLin_init):
+def calculate_TsGLin_array(c, TG0, atg, A, Pe, b, TsGLin_init):
     n = len(Pe)
     TsGLin_array = [TsGLin_init]
     for i in range(n):
-        TsGLin_current = TsGLin([c[i]], zinf, TG0, atg, A, Pe[i], b[i], TsGLin_array[i])
+        TsGLin_current = TsGLin([c[i]], 1000000, TG0, atg, A, Pe[i], b[i], TsGLin_array[i])
         TsGLin_array.append(TsGLin_current[0])
     return TsGLin_array
 
 
-def main_func(params, z, zInf, TG0, atg, A, Pe, b, c):
-    TsGLin_array = calculate_TsGLin_array(c, zInf, TG0, atg, A, Pe, b, 0)
-    result = np.full_like(z, np.nan, dtype=float)
+def reconstruct_Pe_list(params, Pe_1):
+    deltas = [float(p.value) for name, p in params.items() if name.startswith('delta')]
+    Pe_values = [Pe_1]
+    for d in deltas:
+        Pe_values.append(Pe_values[-1] - d)
+    return Pe_values
 
+
+def main_func(z, TG0, atg, A, Pe, left_boundaries, right_boundaries):
+    TsGLin_array = calculate_TsGLin_array(right_boundaries, TG0, atg, A, Pe, left_boundaries, 0)
+    result = np.full_like(z, np.nan, dtype=float)
     result = np.where(
-        (z >= b[0]) & (z < c[0]),
-        TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{1}', 0.0)), b[0], TsGLin_array[0]),
+        (z >= left_boundaries[0]) & (z < right_boundaries[0]),
+        TsGLin(z, 1000000, TG0, atg, A, Pe[0], left_boundaries[0], TsGLin_array[0]),
         result
     )
 
-    for i in range(len(c) - 1):
+    for i in range(len(right_boundaries) - 1):
         result = np.where(
-            (z >= c[i]) & (z < b[i + 1]),
+            (z >= right_boundaries[i]) & (z < left_boundaries[i + 1]),
             TsGLin_array[i + 1],
             result
         )
-
         result = np.where(
-            (z >= b[i + 1]) & (z < c[i + 1]),
-            TsGLin(z, zInf, TG0, atg, A, float(params.get(f'Pe_{i + 2}', 0.0)), b[i + 1], TsGLin_array[i + 1]),
+            (z >= left_boundaries[i + 1]) & (z < right_boundaries[i + 1]),
+            TsGLin(z, 100000, TG0, atg, A, Pe[i + 1], left_boundaries[i + 1], TsGLin_array[i + 1]),
             result
         )
 
-    result = np.where(z >= c[-1], TsGLin_array[-1], result)
-
+    result = np.where(z >= right_boundaries[-1], TsGLin_array[-1], result)
     return result
+
+
+def geoterma(z, TG0, atg):
+    return atg * z + TG0

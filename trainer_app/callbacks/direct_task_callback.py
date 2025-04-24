@@ -3,9 +3,9 @@ import plotly.graph_objects as go
 from dash.dependencies import Input, Output
 from calculates_block.calculates import add_noise_to_temperature, calculate_temperatures
 from calculates_block.data import save_temperature_values
-from components.graphs import create_figure_direct_task
-from components.valid_inputs_of_params import validate_inputs
-from calculates_block.calculates import calculate_TsGLin_array
+from trainer_app.components.graphs import create_figure_direct_task
+from trainer_app.components.valid_inputs_of_params import validate_inputs
+from calculates_block.main_functions import calculate_TsGLin_array
 
 def register_direct_task_callback(app):
     @app.callback(

@@ -1,74 +1,97 @@
 import numpy as np
 import pandas as pd
+from scipy.integrate import simpson
 from lmfit import minimize, Parameters
-from calculates_block.data import generate_data_optim
-from calculates_block.main_functions import main_func
-
-def residuals_(params, x, y, zInf, TG0, atg, A, Pe, b, c):
-    return main_func(params, x, zInf, TG0, atg, A, Pe, b, c) - y
-
-
-def compute_relative_error(param_history, true_Pe):
-    last_params = param_history[-1][0]
-
-    num_pe = len([k for k in last_params.keys() if k.startswith('Pe_')])
-
-    predicted_Pe = np.array([last_params[f'Pe_{i + 1}'] for i in range(num_pe)])
-
-    true_Pe_array = np.array(true_Pe[:num_pe])
-
-    with np.errstate(divide='ignore', invalid='ignore'):
-        relative_error = np.abs((predicted_Pe - true_Pe_array) / true_Pe_array) * 100
-        relative_error[true_Pe_array == 0] = 0
-
-    mean_relative_error = np.nanmean(relative_error)
-
-    return mean_relative_error
-
+from calculates_block.main_functions import main_func, reconstruct_Pe_list
 
 def process_results(param_history):
-    df_history = pd.DataFrame(param_history, columns=['parameters', 'Невязка'])
-    df_params = pd.json_normalize(df_history['parameters'])
-    df_history = pd.concat([df_history, df_params], axis=1)
-    df_history = df_history.drop('parameters', axis=1)
-    return df_history
+    df = pd.DataFrame(param_history, columns=['parameters', 'Невязка', 'Итерация'])
+    params_df = pd.json_normalize(df['parameters'])
+
+    if 'Pe' in params_df:
+        pe_list = params_df.pop('Pe')
+        pe_df = pd.DataFrame(
+            [pe[1:-1] for pe in pe_list],
+            columns=[f"Pe_{i}" for i in range(1, len(pe_list[0]) - 1)]
+        )
+        params_df = pd.concat([params_df, pe_df], axis=1)
+
+    return pd.concat([df.drop(columns='parameters'), params_df], axis=1)
 
 
-def create_parameters(Pe):
+def create_parameters(boundary, known_pe1):
     params = Parameters()
-    for i in range(len(Pe) - 1):
-        params.add(f'Pe_{i + 1}', value=1, min=0, max=30000)
+    n_layers = len(boundary) - 1
+
+    for i in range(n_layers - 1):
+        params.add(f"delta_{i}", value=0, min=0, max=known_pe1)
+
+    sum_prev_deltas = " + ".join([f"delta_{i}" for i in range(n_layers - 1)])
+    params.add(f"delta_{n_layers - 1}", expr=f"{known_pe1} - ({sum_prev_deltas})")
+
     return params
 
 
-def optimization_residuals(params, x, y, zInf, TG0, atg, A, Pe, b, c):
-    return main_func(params, x, zInf, TG0, atg, A, Pe, b, c) - y
+def calculate_deviation_metric(params, z, found_left, found_right, true_left, true_right, Pe_true):
+    Pe_opt = reconstruct_Pe_list(params, Pe_true[0])
+    step_opt = compute_leakage_profile(z, found_left, found_right, Pe_opt)
+    step_true = compute_leakage_profile(z, true_left, true_right, Pe_true)
+
+    norm_factor = np.max(np.abs(step_true))  #
+    norm_factor = norm_factor if norm_factor != 0 else 1.0
+
+    squared_diff = ((step_opt - step_true) / norm_factor) ** 2
+
+    area = simpson(squared_diff)
+
+    L = max(z) - min(z)
+
+    metric = np.sqrt(area / L)
+
+    return metric
 
 
-def optimization_callback(params, iter, resid, param_history):
-    param_values = {param.name: float(param.value) for param in params.values()}
-    chi_squared = float(np.sum(resid ** 2))
-    param_history.append((param_values, chi_squared))
+def optimization_residuals(params, x, y, TG0, atg, A, Pe, left_boundaries, right_boundaries):
+    Pe = reconstruct_Pe_list(params, Pe[0])
+    return main_func(x, TG0, atg, A, Pe, left_boundaries, right_boundaries) - y
 
 
-def run_optimization(b, c, Pe, zInf, TG0, atg, A, sigma, N):
-    x_data, y_data = generate_data_optim(b, c, Pe, zInf, TG0, atg, A, sigma, N)
+def compute_leakage_profile(z, left_boundary, right_boundary, Pe_list):
+    z = np.array(z)
+    result = np.zeros_like(z)
+    for i in range(len(right_boundary) - 1):
+        mask = (z >= right_boundary[i]) & (z < left_boundary[i + 1])
+        result[mask] = Pe_list[i] - Pe_list[i + 1]
+    return result
 
-    params = create_parameters(Pe)
 
+def optimization_callback(params, iter, resid, param_history, z, found_left, found_right, true_left, true_right, Pe_true):
+    param_values = {param.name: float(param.value) for param in params.values() if param.vary or 'delta' in param.name}
+    deviation_metric = calculate_deviation_metric(params, z, found_left, found_right, true_left, true_right, Pe_true)
+    Pe_current = reconstruct_Pe_list(params, Pe_true[0])
+    param_values['Pe'] = Pe_current
+    param_history.append((param_values, deviation_metric, iter))
+
+
+def run_optimization(x_data, y_data, found_left, found_right, true_left, true_right, Pe, TG0, atg, A):
+    known_pe1 = Pe[0]
+    params = create_parameters(found_left, known_pe1)
     param_history = []
 
     result = minimize(
-        lambda params, x, y: optimization_residuals(params, x, y, zInf, TG0, atg, A, Pe, b, c),
+        lambda params, x, y: optimization_residuals(params, x, y, TG0, atg, A, Pe, found_left, found_right),
         params,
         args=(x_data, y_data),
         method='leastsq',
-        iter_cb=lambda params, iter, resid, *args, **kwargs: optimization_callback(params, iter, resid, param_history),
-        ftol=1e-15
+        iter_cb=lambda params, iter, resid, *args, **kwargs: optimization_callback(
+            params, iter, resid, param_history, x_data, found_left, found_right, true_left, true_right, Pe),
+        ftol=1e-15,
+        nan_policy='omit'
     )
 
     df_history = process_results(param_history)
+    return result, df_history
 
-    return result, param_history, df_history, x_data, y_data
+
 
 

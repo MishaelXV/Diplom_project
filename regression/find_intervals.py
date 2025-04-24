@@ -1,12 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
-import os
 from sklearn.linear_model import LinearRegression
 from calculates_block.calculates import get_interval_boundaries
-from calculates_block.data import smooth_data, generate_data
+from calculates_block.data import smooth_data, data_norm, generate_data, noize_data
+from regression.global_models import model_ws, model_ms
 from regression.metrics import calculate_mae, calculate_mse, calculate_rmse, calculate_relative_mae
-from regression.optuna_search import predict_params, train_models
+from regression.optuna_search import predict_params
 
 def calculate_window_slope(z_window, T_window):
     model = LinearRegression().fit(z_window, T_window)
@@ -45,53 +44,6 @@ def find_growth_intervals(T_smooth, z_all, sigma, model_ws=None, model_ms=None, 
         return detect_growth_with_noise(T_smooth, z_all, window_size, min_slope)
 
 
-def filter_small_intervals(z_starts, z_ends, min_length):
-    filtered_starts, filtered_ends = [], []
-    for s, e in zip(z_starts, z_ends):
-        if e - s >= min_length:
-            filtered_starts.append(s)
-            filtered_ends.append(e)
-    return filtered_starts, filtered_ends
-
-
-def merge_close_intervals(filtered_starts, filtered_ends, max_gap):
-    if not filtered_starts:
-        return np.array([]), np.array([])
-
-    merged_starts = [filtered_starts[0]]
-    merged_ends = [filtered_ends[0]]
-
-    for i in range(1, len(filtered_starts)):
-        if filtered_starts[i] - merged_ends[-1] <= max_gap:
-            merged_ends[-1] = filtered_ends[i]
-        else:
-            merged_starts.append(filtered_starts[i])
-            merged_ends.append(filtered_ends[i])
-
-    return merged_starts, merged_ends
-
-
-def convert_to_original_indices(merged_starts, merged_ends, z_norm):
-    new_starts = [np.argmin(np.abs(z_norm - s)) for s in merged_starts]
-    new_ends = [np.argmin(np.abs(z_norm - e)) for e in merged_ends]
-    return np.array(new_starts), np.array(new_ends)
-
-
-def postprocess_intervals(start_indices, end_indices, z_norm, min_interval_length=0.05, max_gap_length=0.03):
-    if len(start_indices) == 0:
-        return start_indices, end_indices
-
-    z_starts = z_norm[start_indices]
-    z_ends = z_norm[end_indices]
-
-    filtered_starts, filtered_ends = filter_small_intervals(z_starts, z_ends, min_interval_length)
-    if not filtered_starts:
-        return np.array([]), np.array([])
-
-    merged_starts, merged_ends = merge_close_intervals(filtered_starts, filtered_ends, max_gap_length)
-    return convert_to_original_indices(merged_starts, merged_ends, z_norm)
-
-
 def normalize_to_original_scale(boundaries, z_min, z_max):
     return [b * (z_max - z_min) + z_min for b in boundaries]
 
@@ -110,9 +62,68 @@ def process_detected_boundaries(start_indices, end_indices, z_norm, z_all):
     return left_original, right_original
 
 
-def get_boundaries(boundary_dict, Pe, N, sigma, TG0, atg, A, model_ws=None, model_ms=None, fixed_ws=None, fixed_ms=None):
-    z_norm, T_true_norm, T_noisy_norm, z_all, T_true, T_noisy = generate_data(
-        boundary_dict['left'], boundary_dict['right'], Pe, 100000, TG0, atg, A, sigma, N)
+def merge_growth_intervals_by_gap(start_indices, end_indices, z_norm, max_gap=0.04):
+    if len(start_indices) == 0:
+        return [], []
+
+    merged_starts = [start_indices[0]]
+    merged_ends = [end_indices[0]]
+
+    for i in range(1, len(start_indices)):
+        gap = z_norm[start_indices[i]] - z_norm[merged_ends[-1]]
+        if gap <= max_gap:
+            merged_ends[-1] = end_indices[i]
+        else:
+            merged_starts.append(start_indices[i])
+            merged_ends.append(end_indices[i])
+
+    return merged_starts, merged_ends
+
+
+def remove_short_intervals(start_indices, end_indices, z_norm, min_length=0.01):
+    filtered_starts = []
+    filtered_ends = []
+
+    for start, end in zip(start_indices, end_indices):
+        length = z_norm[end] - z_norm[start]
+        if length >= min_length:
+            filtered_starts.append(start)
+            filtered_ends.append(end)
+
+    return filtered_starts, filtered_ends
+
+
+def adjust_interval_counts(true_left, found_left, found_right):
+    expected_count = len(true_left)
+    found_count = len(found_left)
+
+    adjusted_left = list(found_left)
+    adjusted_right = list(found_right)
+
+    if found_count > expected_count:
+        indexed_lengths = [(i, r - l) for i, (l, r) in enumerate(zip(adjusted_left, adjusted_right))]
+
+        sorted_lengths = sorted(indexed_lengths, key=lambda x: x[1], reverse=True)
+
+        top_indices = [x[0] for x in sorted_lengths[:expected_count]]
+
+        top_indices_sorted = sorted(top_indices)
+
+        adjusted_left = [found_left[i] for i in top_indices_sorted]
+        adjusted_right = [found_right[i] for i in top_indices_sorted]
+
+    elif found_count < expected_count:
+        missing_count = expected_count - found_count
+        for _ in range(missing_count):
+            adjusted_left.insert(0, 0)
+            adjusted_right.insert(0, 0)
+
+    return adjusted_left, adjusted_right
+
+
+def get_boundaries(x_data, y_data, y_data_noize, Pe, N, sigma, A, model_ws=None, model_ms=None,
+                   fixed_ws=None, fixed_ms=None):
+    z_norm, T_true_norm, T_noisy_norm = data_norm(x_data, y_data, y_data_noize)
 
     T_smooth = smooth_data(T_noisy_norm)
     filtered_intervals = find_growth_intervals(
@@ -122,78 +133,57 @@ def get_boundaries(boundary_dict, Pe, N, sigma, TG0, atg, A, model_ws=None, mode
     )
 
     left, right, starts, ends = get_interval_boundaries(filtered_intervals, z_norm)
-    starts, ends = postprocess_intervals(starts, ends, z_norm)
-    left_original, right_original = process_detected_boundaries(starts, ends, z_norm, z_all)
+    starts, ends = merge_growth_intervals_by_gap(starts, ends, z_norm, max_gap=0.01)
+    starts, ends = remove_short_intervals(starts, ends, z_norm, min_length=0.01)
+    left_boundaries, right_boundaries = process_detected_boundaries(starts, ends, z_norm, x_data)
+    # left_boundaries, right_boundaries = adjust_interval_counts(boundary_dict['left'], left_boundaries, right_boundaries)
 
-    return left_original, right_original, z_norm, T_true_norm, T_noisy_norm, T_smooth, starts, ends
+    return left_boundaries, right_boundaries
 
 
-def plot_data(z_norm, T_true_norm, T_noisy_norm, T_smooth, start_indices, end_indices):
+def plot_data(z_norm, T_smooth, start_indices, end_indices):
     plt.figure(figsize=(10, 5))
-    plt.plot(z_norm, T_true_norm, label="Нормированная исходная кривая", marker='o', markersize=3, linestyle='-',
-             color='blue')
-    plt.plot(z_norm, T_noisy_norm, label="Нормированная шумная кривая", alpha=0.7, color='gray')
-    plt.plot(z_norm, T_smooth, label="Нормированная сглаженная кривая", linewidth=2, color='red')
+    plt.plot(z_norm, T_smooth, label="Сглаженная кривая", linewidth=2, color='red')
 
     for start, end in zip(start_indices, end_indices):
         plt.axvspan(z_norm[start], z_norm[end], color='green', alpha=0.2)
 
-    plt.xlabel("z (нормированная)")
-    plt.ylabel("T (нормированная)")
-    plt.title("Нормированные интервалы роста")
+    plt.xlabel("z/rw")
+    plt.ylabel("T")
+    plt.title("Интервалы роста")
     plt.legend()
     plt.show()
 
 
-def load_training_data():
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    RELATIVE_PATH = os.path.join('regression', 'training_data.txt')
-    FULL_PATH = os.path.join(BASE_DIR, RELATIVE_PATH)
-    return pd.read_csv(FULL_PATH, sep='\t')
-
-
-def print_metrics(true_left, true_right, found_left, found_right, starts=None, ends=None, z_norm=None):
-    mae = calculate_mae(true_left, true_right, found_left, found_right)
-    mse = calculate_mse(true_left, true_right, found_left, found_right)
-    rmse = calculate_rmse(true_left, true_right, found_left, found_right)
-    relative_mae = calculate_relative_mae(true_left, true_right, found_left, found_right)
-
-    print("\nРезультаты оценки точности:")
-    print("=" * 40)
-    print(f"Найденные левые границы: {found_left}")
-    print(f"Найденные правые границы: {found_right}")
-
-    # Добавляем вывод нормированных интервалов
-    if starts is not None and ends is not None and z_norm is not None:
-        print("\nНормированные найденные интервалы:")
-        for start, end in zip(starts, ends):
-            print(f"[{z_norm[start]:.4f}, {z_norm[end]:.4f}]")
-
-    print(f"\nСредняя относительная погрешность: {relative_mae}")
-    print(f"Суммарная абсолютная ошибка (MAE): {mae}")
-    print(f"Суммарная квадратичная ошибка (MSE): {mse}")
-    print(f"RMSE: {rmse}")
-    print("=" * 40)
-
 # тестовый пример
 def main():
-    boundary_dict = {'left': [0, 150, 300], 'right': [100, 250, 400]}
-    Pe = [10000, 5000, 0]
-    N = 400
-    sigma = 0.04
+    boundary_dict = {'left': [0, 150, 300, 450], 'right': [100, 250, 350, 600]}
+    Pe = [2000, 1000, 500, 0]
+    N = 500
+    sigma = 0.03
     TG0 = 1
     atg = 0.0001
-    A = 10
+    A = 5
 
-    df = load_training_data()
-    model_ws, model_ms = train_models(df)
+    x_data, y_data = generate_data(boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, N)
+    y_data_noize = noize_data(y_data, sigma)
 
-    results = get_boundaries(boundary_dict, Pe, N, sigma, TG0, atg, A, model_ws, model_ms)
-    found_left, found_right, z_norm, T_true_norm, T_noisy_norm, T_smooth, starts, ends = results
+    found_left, found_right = get_boundaries(x_data, y_data, y_data_noize, Pe, N, sigma, A, model_ws, model_ms)
+    print(found_left, found_right)
 
-    plot_data(z_norm, T_true_norm, T_noisy_norm, T_smooth, starts, ends)
-    print_metrics(boundary_dict['left'], boundary_dict['right'], found_left, found_right, starts, ends, z_norm)
+    z_norm, T_true_norm, T_noisy_norm = data_norm(x_data, y_data, y_data_noize)
+    T_smooth = smooth_data(T_noisy_norm)
 
+    filtered_intervals = find_growth_intervals(
+        T_smooth, z_norm, sigma,
+        model_ws=model_ws, model_ms=model_ms, Pe0=Pe[0], A=A, N=N
+    )
+
+    left, right, starts, ends = get_interval_boundaries(filtered_intervals, z_norm)
+    starts, ends = merge_growth_intervals_by_gap(starts, ends, z_norm, max_gap=0.01)
+    starts, ends = remove_short_intervals(starts, ends, z_norm, min_length=0.01)
+
+    plot_data(z_norm, T_smooth, starts, ends)
 
 if __name__ == "__main__":
     main()

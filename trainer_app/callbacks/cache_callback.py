@@ -1,11 +1,11 @@
 import dash
 from dash.dependencies import Input, Output
 from optimizator.optimizer import run_optimization
-from components.boundaries import extract_boundaries
-from regression.find_intervals import load_training_data
+from regression.global_models import model_ws, model_ms
+from trainer_app.components.boundaries import extract_boundaries
 from regression.find_intervals import get_boundaries
-from calculates_block.data import generate_data_optim
-from regression.optuna_search import train_models
+from calculates_block.data import generate_data, noize_data
+
 
 def register_cache_callback(app):
     @app.callback(
@@ -25,24 +25,20 @@ def register_cache_callback(app):
         if not n_clicks:
             raise dash.exceptions.PreventUpdate
 
-        df = load_training_data()
-        model_ws, model_ms = train_models(df)
-
-        results = get_boundaries(boundary_data, b_values, N, sigma, TG0, atg, A, model_ws, model_ms)
-        found_left, found_right, z_norm, T_true_norm, T_noisy_norm, T_smooth, starts, ends = results
-
         left_true, right_true = extract_boundaries(boundary_data)
-        result, param_history, df_history, x_data, y_data = run_optimization(found_left, found_right, b_values, 100000, TG0, atg, A, sigma, N)
+        x_data, y_data = generate_data(left_true, right_true, b_values, TG0, atg, A, N)
+        y_data_noize = noize_data(y_data, sigma)
 
-        x_data_true, y_data_true = generate_data_optim(left_true, right_true, b_values, 1000000, TG0, atg, A, sigma, N)
-
+        found_left, found_right = get_boundaries(x_data, y_data_noize, y_data_noize, b_values, N, sigma, A, model_ws, model_ms)
+        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right, left_true,
+                                              right_true, b_values, TG0, atg, A)
         boundaries_cache = {
             'left': found_left,
             'right': found_right,
             'left_true': left_true,
             'right_true': right_true,
-            'x_data_true': x_data_true,
-            'y_data_true': y_data_true,
+            'x_data_true': x_data,
+            'y_data_true': y_data,
         }
 
         serializable_param_history = [

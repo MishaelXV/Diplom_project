@@ -1,12 +1,21 @@
 import matplotlib.pyplot as plt
-import pandas as pd
-import os
 from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Rectangle
 from sklearn.linear_model import LinearRegression
-from calculates_block.calculates import main_func
-from calculates_block.data import generate_data_optim, smooth_data
-from regression.optuna_search import train_models, predict_params
+from calculates_block.data import generate_data, smooth_data, data_norm, noize_data
+from regression.global_models import model_ws, model_ms
+from regression.optuna_search import predict_params
+
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman"],
+    "font.size": 16,
+    "axes.labelsize": 18,
+    "axes.titlesize": 18,
+    "legend.fontsize": 13,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+})
 
 # Параметры
 Pe = [2000, 1000, 0]
@@ -15,35 +24,19 @@ TG0 = 1
 atg = 0.0001
 A = 5
 sigma = 0.001
-N = 200
-b = [0, 150, 300]
-c = [100, 250, 400]
+N = 500
+left_boundaries = [0, 150, 300]
+right_boundaries = [100, 250, 400]
 
-z, T_noisy = generate_data_optim(b, c, Pe, zInf, TG0, atg, A, sigma, N)
-T_true = main_func({f'Pe_{i + 1}': Pe[i] for i in range(len(Pe) - 1)}, z, zInf, TG0, atg, A, Pe, b, c)
-
-z_min, z_max = z.min(), z.max()
-T_min, T_max = T_noisy.min(), T_noisy.max()
-
-z_norm = (z - z_min) / (z_max - z_min)
-T_noisy_norm = (T_noisy - T_min) / (T_max - T_min)
-T_true_norm = (T_true - T_min) / (T_max - T_min)
+x_data, y_data = generate_data(left_boundaries, right_boundaries, Pe, TG0, atg, A, N)
+y_data_noize = noize_data(y_data, sigma)
+z_norm, T_true_norm, T_noisy_norm = data_norm(x_data, y_data, y_data_noize)
 T_smooth_norm = smooth_data(T_noisy_norm)
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-RELATIVE_PATH = os.path.join('regression', 'training_data.txt')
-
-FULL_PATH = os.path.join(BASE_DIR, RELATIVE_PATH)
-
-df = pd.read_csv(FULL_PATH, sep='\t')
-
-model_ws, model_ms = train_models(df)
 window_size, min_slope = predict_params(Pe[0], A, sigma, N, model_ws, model_ms)
 
 fig, ax = plt.subplots(figsize=(12, 6))
-line_true, = ax.plot(z_norm, T_true_norm, label="Истинная кривая (норм.)", color="black", alpha=0.5)
-line_smooth, = ax.plot(z_norm, T_smooth_norm, label="Сглаженная кривая (норм.)", color="red", alpha=0.7)
+line_smooth, = ax.plot(z_norm, T_smooth_norm, label="Температурный профиль", color="red", alpha=0.7)
 window_line, = ax.plot([], [], color='blue', linewidth=2, label="Линейная регрессия")
 current_pos_left = ax.axvline(0, color='purple', linestyle='--', alpha=0.5, label="Границы окна")
 current_pos_right = ax.axvline(0, color='purple', linestyle='--', alpha=0.5)
@@ -52,10 +45,10 @@ text_info = ax.text(0.02, 0.95, '', transform=ax.transAxes, fontsize=10,
 
 ax.set_ylim(T_smooth_norm.min(), T_smooth_norm.max() + 0.2)
 ax.set_xlim(z_norm.min(), z_norm.max())
-ax.set_title("Анимация оконной линейной регрессии (нормированные данные)", fontsize=14)
-ax.set_xlabel("Нормированная координата z", fontsize=12)
-ax.set_ylabel("Нормированная температура T", fontsize=12)
-ax.legend(loc='upper right')
+ax.set_title("Оконная линейная регрессия")
+ax.set_xlabel("z/rw")
+ax.set_ylabel("θ")
+ax.legend(frameon=False)
 ax.grid(True, linestyle='--', alpha=0.5)
 
 highlight_regions = []
@@ -142,7 +135,7 @@ def update(i):
         for region in merged_regions:
             new_patch = Rectangle((region.get_x(), region.get_y()),
                                   region.get_width(), region.get_height(),
-                                  color='green', alpha=0.15)
+                                  color='green', alpha=0.1)
             ax.add_patch(new_patch)
             highlight_regions.append(new_patch)
 
@@ -161,6 +154,4 @@ ani = FuncAnimation(fig, update, frames=range(len(z_norm) - window_size + 1),
 
 plt.tight_layout()
 plt.show()
-
-# Для сохранения в файл
-ani.save('norm_animation.gif', writer='pillow', fps=15)
+# ani.save('norm_animation.gif', writer='pillow', fps=15)

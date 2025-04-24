@@ -11,8 +11,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from joblib import Parallel, delayed
 from tqdm import tqdm
-from regression.find_intervals import load_training_data, get_boundaries
+from calculates_block.data import generate_data, noize_data
+from regression.find_intervals import get_boundaries
 from regression.metrics import calculate_mae, calculate_relative_mae, calculate_rmse, calculate_mse
+from regression.optuna_search import load_training_data
 
 def train_models(df, model_type='GradientBoosting'):
     X = df[["Pe0", "A", "sigma", "N"]]
@@ -44,14 +46,15 @@ def _single_evaluation(predict_ws, predict_ms, boundary_dict, Pe, N, sigma, TG0,
     start_time = time.time()
     use_fixed = not hasattr(predict_ws, "predict")
 
+    x_data, y_data = generate_data(boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, N)
+    y_data_noize = noize_data(y_data, sigma)
+
     if use_fixed:
-        left, right, *_ = get_boundaries(
-            boundary_dict, Pe, N, sigma, TG0, atg, A,
+        left, right = get_boundaries( x_data, y_data, y_data_noize, Pe, N, sigma, A,
             fixed_ws=predict_ws, fixed_ms=predict_ms
         )
     else:
-        left, right, *_ = get_boundaries(
-            boundary_dict, Pe, N, sigma, TG0, atg, A,
+        left, right = get_boundaries( x_data, y_data, y_data_noize, Pe, N, sigma, A,
             model_ws=predict_ws, model_ms=predict_ms
         )
 
@@ -120,6 +123,7 @@ def plot_results(results_df):
     bars1 = ax1.bar(results_mae_sorted['model'], results_mae_sorted['mean_relative_mae'], color=palette_mae)
     ax1.set_title('Относительная ошибка MAE (%)', fontsize=14)
     ax1.set_ylabel('MAE (%)')
+    ax1.grid(False)
     ax1.tick_params(axis='x', rotation=30)
     for bar in bars1:
         ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1,
@@ -129,6 +133,7 @@ def plot_results(results_df):
     bars2 = ax2.bar(results_time_sorted['model'], results_time_sorted['mean_time'], color=palette_time)
     ax2.set_title('Среднее время на реализацию', fontsize=14)
     ax2.set_ylabel('Время (сек)')
+    ax2.grid(False)
     ax2.tick_params(axis='x', rotation=30)
     for bar in bars2:
         ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.001,
@@ -148,7 +153,7 @@ def main():
     TG0 = 1
     atg = 0.0001
     A = 10
-    n_runs = 100
+    n_runs = 1
 
     df = load_training_data()
     results = compare_models(df, boundary_dict, Pe, N, sigma, TG0, atg, A, n_runs)
@@ -158,7 +163,6 @@ def main():
     print(results_sorted[['model', 'mean_relative_mae', 'mean_time']].to_string(index=False))
 
     plot_results(results)
-
 
 if __name__ == "__main__":
     main()

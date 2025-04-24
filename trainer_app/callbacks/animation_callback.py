@@ -1,7 +1,7 @@
 import dash
 import numpy as np
 from dash.dependencies import Input, Output
-from components.graphs import create_figure_animation, generate_frames
+from trainer_app.components.graphs import create_figure_animation, generate_frames
 
 def register_animation_callback(app):
     @app.callback(

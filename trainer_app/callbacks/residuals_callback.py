@@ -2,7 +2,7 @@ import dash
 import numpy as np
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
-from components.graphs import create_residuals_traces, create_update_res_buttons
+from trainer_app.components.graphs import create_residuals_traces, create_update_res_buttons
 
 def register_residuals_callback(app):
     @app.callback(

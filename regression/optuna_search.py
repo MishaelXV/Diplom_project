@@ -1,4 +1,5 @@
 import itertools
+import os
 import numpy as np
 import pandas as pd
 import optuna
@@ -6,15 +7,15 @@ from tqdm import tqdm
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from calculates_block.data import generate_data, smooth_data
+from calculates_block.data import smooth_data, generate_data
 from regression.metrics import calculate_boundary_errors
 from calculates_block.calculates import get_interval_boundaries
 from joblib import Parallel, delayed
 
-def evaluate_pipeline(regression_window_size, min_slope, Pe, A, sigma, N, boundary_dict, TG0=1, atg=0.0001, zInf=100000):
+def evaluate_pipeline(regression_window_size, min_slope, Pe, A, N, boundary_dict, TG0=1, atg=0.0001):
     try:
         z_norm, T_true_norm, T_noisy_norm, z_all, T_true, T_noisy = generate_data(
-            boundary_dict['left'], boundary_dict['right'], Pe, zInf, TG0, atg, A, sigma, N)
+            boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, N)
 
         T_smooth = smooth_data(T_noisy_norm)
         filtered = np.zeros_like(T_smooth, dtype=bool)
@@ -124,4 +125,11 @@ def predict_params(Pe0, A, sigma, N, model_ws, model_ms):
     ws = model_ws.predict(x_input)[0]
     ms = model_ms.predict(x_input)[0]
     return int(round(ws)), round(ms, 3)
+
+
+def load_training_data():
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    RELATIVE_PATH = os.path.join('regression', 'training_data.txt')
+    FULL_PATH = os.path.join(BASE_DIR, RELATIVE_PATH)
+    return pd.read_csv(FULL_PATH, sep='\t')
 

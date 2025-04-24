@@ -35,7 +35,6 @@ def calculate_boundary_errors(true_left, true_right, found_left, found_right):
     adjusted_left, adjusted_right, penalty = adjust_interval_counts(
         true_left, found_left, found_right
     )
-
     left_errors = np.abs(np.array(true_left) - np.array(adjusted_left))
     right_errors = np.abs(np.array(true_right) - np.array(adjusted_right))
 
