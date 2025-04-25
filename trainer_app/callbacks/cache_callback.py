@@ -2,7 +2,7 @@ import dash
 from dash.dependencies import Input, Output
 from optimizator.optimizer import run_optimization
 from regression.global_models import model_ws, model_ms
-from trainer_app.components.boundaries import extract_boundaries
+from trainer_app.components.support_functions import extract_boundaries
 from regression.find_intervals import get_boundaries
 from calculates_block.data import generate_data, noize_data
 

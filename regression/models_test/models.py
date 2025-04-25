@@ -13,8 +13,8 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 from calculates_block.data import generate_data, noize_data
 from regression.find_intervals import get_boundaries
+from regression.global_models import load_training_data
 from regression.metrics import calculate_mae, calculate_relative_mae, calculate_rmse, calculate_mse
-from regression.optuna_search import load_training_data
 
 def train_models(df, model_type='GradientBoosting'):
     X = df[["Pe0", "A", "sigma", "N"]]
@@ -142,7 +142,7 @@ def plot_results(results_df):
     plt.suptitle("Сравнение моделей по точности (%) и скорости", fontsize=16, weight='bold')
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig("Models_test.png", format="png", dpi=300)
-    plt.show()
+    plt.close()
 
 
 def main():

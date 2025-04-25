@@ -1,7 +1,7 @@
 import dash
 from dash import html
 from dash.dependencies import Input, Output, State
-from calculates_block.calculates import debit
+from calculates_block.main_functions import debit
 
 def register_debits_callback(app):
     @app.callback(

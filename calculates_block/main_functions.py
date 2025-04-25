@@ -1,6 +1,7 @@
 import mpmath
 import numpy as np
 
+# Решение уравнения теплопроводности
 def TsGLin(z, zInf, TG0, atg, A, Pe, zl, Tl):
     z = [mpmath.mpf(z_i) for z_i in z]
     zInf = mpmath.mpf(zInf)
@@ -33,11 +34,11 @@ def TsGLin(z, zInf, TG0, atg, A, Pe, zl, Tl):
     return results
 
 
-def calculate_TsGLin_array(c, TG0, atg, A, Pe, b, TsGLin_init):
+def calculate_TsGLin_array(right_boundaries, TG0, atg, A, Pe, left_boundaries, TsGLin_init):
     n = len(Pe)
     TsGLin_array = [TsGLin_init]
     for i in range(n):
-        TsGLin_current = TsGLin([c[i]], 1000000, TG0, atg, A, Pe[i], b[i], TsGLin_array[i])
+        TsGLin_current = TsGLin([right_boundaries[i]], 1000000, TG0, atg, A, Pe[i], left_boundaries[i], TsGLin_array[i])
         TsGLin_array.append(TsGLin_current[0])
     return TsGLin_array
 
@@ -50,6 +51,7 @@ def reconstruct_Pe_list(params, Pe_1):
     return Pe_values
 
 
+# Модельная кривая
 def main_func(z, TG0, atg, A, Pe, left_boundaries, right_boundaries):
     TsGLin_array = calculate_TsGLin_array(right_boundaries, TG0, atg, A, Pe, left_boundaries, 0)
     result = np.full_like(z, np.nan, dtype=float)
@@ -77,3 +79,7 @@ def main_func(z, TG0, atg, A, Pe, left_boundaries, right_boundaries):
 
 def geoterma(z, TG0, atg):
     return atg * z + TG0
+
+
+def debit(Pe, lw=0.6, rw=0.1, cw=4200, row=1000):
+    return 24 * 3600 * (Pe * lw * np.pi * rw) / (cw * row)

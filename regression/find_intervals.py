@@ -1,11 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from calculates_block.calculates import get_interval_boundaries
 from calculates_block.data import smooth_data, data_norm, generate_data, noize_data
-from regression.global_models import model_ws, model_ms
+from regression.global_models import model_ws, model_ms, predict_params
 from regression.metrics import calculate_mae, calculate_mse, calculate_rmse, calculate_relative_mae
-from regression.optuna_search import predict_params
 
 def calculate_window_slope(z_window, T_window):
     model = LinearRegression().fit(z_window, T_window)
@@ -46,6 +44,30 @@ def find_growth_intervals(T_smooth, z_all, sigma, model_ws=None, model_ms=None, 
 
 def normalize_to_original_scale(boundaries, z_min, z_max):
     return [b * (z_max - z_min) + z_min for b in boundaries]
+
+
+def get_interval_boundaries(filtered_intervals, z_all):
+    start_indices = []
+    end_indices = []
+    left_boundaries = []
+    right_boundaries = []
+    in_interval = False
+
+    for i in range(1, len(z_all)):
+        if filtered_intervals[i] and not in_interval:
+            start_indices.append(i - 1)
+            left_boundaries.append(z_all[i - 1])
+            in_interval = True
+        elif not filtered_intervals[i] and in_interval:
+            end_indices.append(i - 1)
+            right_boundaries.append(z_all[i - 1])
+            in_interval = False
+
+    if end_indices and end_indices[-1] < len(z_all) - 1:
+        end_indices[-1] = len(z_all) - 1
+        right_boundaries[-1] = z_all[-1]
+
+    return left_boundaries, right_boundaries, start_indices, end_indices
 
 
 def process_detected_boundaries(start_indices, end_indices, z_norm, z_all):

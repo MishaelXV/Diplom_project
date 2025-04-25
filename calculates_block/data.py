@@ -2,7 +2,6 @@ import numpy as np
 from calculates_block.main_functions import main_func
 from scipy.signal import medfilt
 from pathlib import Path
-from lmfit import Parameters
 
 def save_temperature_values(T_all, filename):
     project_root = Path(__file__).parent.parent.parent
@@ -31,11 +30,6 @@ def data_norm(x_data, y_data, y_data_noize):
 
 def generate_data(left_boundaries, right_boundaries, Pe, TG0, atg, A, N):
     x_data = np.linspace(min(left_boundaries), max(right_boundaries), N)
-
-    params = Parameters()
-    for i in range(len(left_boundaries) - 1):
-        params.add(f'delta_{i}', value=Pe[i] - Pe[i + 1])
-
     y_data = main_func(x_data, TG0, atg, A, Pe, left_boundaries, right_boundaries)
 
     return x_data, y_data

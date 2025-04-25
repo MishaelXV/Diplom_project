@@ -1,15 +1,12 @@
 import itertools
-import os
 import numpy as np
 import pandas as pd
 import optuna
 from tqdm import tqdm
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from calculates_block.data import smooth_data, generate_data
+from regression.find_intervals import get_interval_boundaries
 from regression.metrics import calculate_boundary_errors
-from calculates_block.calculates import get_interval_boundaries
 from joblib import Parallel, delayed
 
 def evaluate_pipeline(regression_window_size, min_slope, Pe, A, N, boundary_dict, TG0=1, atg=0.0001):
@@ -102,34 +99,3 @@ def collect_training_data():
 
     training_data = [res for res in results if res is not None]
     return pd.DataFrame(training_data)
-
-
-def train_models(df):
-    X = df[["Pe0", "A", "sigma", "N"]]
-    y_ws = df["window_size"]
-    y_ms = df["min_slope"]
-
-    X_train, X_test, y_ws_train, y_ws_test = train_test_split(X, y_ws, test_size=0.2, random_state=42)
-    _, _, y_ms_train, y_ms_test = train_test_split(X, y_ms, test_size=0.2, random_state=42)
-
-    model_ws = GradientBoostingRegressor(random_state=42)
-    model_ws.fit(X_train, y_ws_train)
-    model_ms = GradientBoostingRegressor(random_state=42)
-    model_ms.fit(X_train, y_ms_train)
-
-    return model_ws, model_ms
-
-
-def predict_params(Pe0, A, sigma, N, model_ws, model_ms):
-    x_input = pd.DataFrame([[Pe0, A, sigma, N]], columns=["Pe0", "A", "sigma", "N"])
-    ws = model_ws.predict(x_input)[0]
-    ms = model_ms.predict(x_input)[0]
-    return int(round(ws)), round(ms, 3)
-
-
-def load_training_data():
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    RELATIVE_PATH = os.path.join('regression', 'training_data.txt')
-    FULL_PATH = os.path.join(BASE_DIR, RELATIVE_PATH)
-    return pd.read_csv(FULL_PATH, sep='\t')
-

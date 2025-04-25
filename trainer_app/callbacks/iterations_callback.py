@@ -1,7 +1,7 @@
 import pandas as pd
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
-from calculates_block.calculates import prepare_dataframe_2
+from trainer_app.components.support_functions import prepare_dataframe_2
 from trainer_app.components.graphs import create_iterations_traces, create_update_buttons
 
 def register_iterations_callback(app):

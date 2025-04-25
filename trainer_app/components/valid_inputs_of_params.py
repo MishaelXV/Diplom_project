@@ -1,4 +1,4 @@
-from trainer_app.components.boundaries import extract_boundaries
+from trainer_app.components.support_functions import extract_boundaries
 
 def validate_inputs(a, b_values, boundary_values, A, TG0, atg, sigma):
     if any(param is None or param < 0 for param in [a, A, TG0, atg, sigma]):

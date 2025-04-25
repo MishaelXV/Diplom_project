@@ -32,7 +32,7 @@ def main():
     y_data_noize = noize_data(y_data, sigma)
 
     found_left, found_right = get_boundaries(x_data, y_data, y_data_noize, Pe, N, sigma, A, model_ws, model_ms)
-    print(found_left, found_right)
+
     if len(found_left) <= 2:
         Pe_opt = [Pe[0], 0]
         y_temp = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)

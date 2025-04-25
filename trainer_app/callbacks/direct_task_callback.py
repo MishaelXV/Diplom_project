@@ -1,11 +1,10 @@
 import dash
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
-from calculates_block.calculates import add_noise_to_temperature, calculate_temperatures
+from calculates_block.data import generate_data, noize_data
 from calculates_block.data import save_temperature_values
 from trainer_app.components.graphs import create_figure_direct_task
 from trainer_app.components.valid_inputs_of_params import validate_inputs
-from calculates_block.main_functions import calculate_TsGLin_array
 
 def register_direct_task_callback(app):
     @app.callback(
@@ -22,15 +21,12 @@ def register_direct_task_callback(app):
     def update_graph(a, b_values, boundary_values, A, TG0, atg, sigma, N):
         try:
             b_values, left_boundary, right_boundary = validate_inputs(a, b_values, boundary_values, A, TG0, atg, sigma)
-            TsGLin_array = calculate_TsGLin_array(right_boundary, TG0, atg, A, b_values, left_boundary, 0)
-            z_all, T_all = calculate_temperatures(a, left_boundary, right_boundary, N, TG0, atg, A, b_values, TsGLin_array)
-
-            T_all_noisy = add_noise_to_temperature(T_all, sigma)
+            z_all, T_all = generate_data(left_boundary, right_boundary, b_values, TG0, atg, A, N)
+            T_all_noisy = noize_data(T_all, sigma)
 
             save_temperature_values(T_all, 'temperatura_values.txt')
 
             fig = create_figure_direct_task(z_all, T_all, T_all_noisy, left_boundary, right_boundary, TG0, atg, a)
-
             return fig
 
         except ValueError as e:

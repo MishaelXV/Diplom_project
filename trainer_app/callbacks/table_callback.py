@@ -1,6 +1,6 @@
 import pandas as pd
 from dash.dependencies import Input, Output
-from calculates_block.calculates import prepare_dataframe
+from trainer_app.components.support_functions import prepare_dataframe
 
 def register_table_callback(app):
     @app.callback(
