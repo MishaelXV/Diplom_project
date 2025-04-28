@@ -1,106 +1,75 @@
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-from lmfit import Parameters
-from calculates_block.main_functions import main_func
 from main_algorithm.constants import COMMON_CONSTANTS
+from main_block.main_functions import main_func
+from optimizator.optimizer import compute_leakage_profile
 
-def create_figure_and_axes(x_data, y_data):
-    fig, ax = plt.subplots(figsize=(12, 8))
+true_boundaries = COMMON_CONSTANTS['boundaries']
+Pe = COMMON_CONSTANTS['Pe']
+N = COMMON_CONSTANTS['N']
+sigma = COMMON_CONSTANTS['sigma']
+TG0 = COMMON_CONSTANTS['TG0']
+atg = COMMON_CONSTANTS['atg']
+A = COMMON_CONSTANTS['A']
 
-    ax.plot(x_data, y_data, label='Профиль температуры', linewidth=2)
-    line, = ax.plot([], [], 'g-', label='Модельная кривая', linewidth=2.5, alpha=0.8)
-    fill = ax.fill_between([], [], [], color='red', alpha=0.3, label='Отклонение')
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman"],
+    "font.size": 14,
+    "axes.labelsize": 16,
+    "axes.titlesize": 18,
+    "legend.fontsize": 13,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+})
 
-    ax.set_title('Подгонка кривой', fontsize=14, pad=15)
-    ax.set_xlabel('z/rw', fontsize=12)
-    ax.set_ylabel('θ', fontsize=12)
-    ax.legend(loc='upper left', fontsize=10)
-    ax.grid(True, linestyle='--', alpha=0.6)
+def run_ani(x_data, y_data_noize, df_history, found_left, found_right):
+    fig, (ax_leak, ax_temp) = plt.subplots(2, 1, figsize=(10, 8), sharex=True,
+                                           gridspec_kw={'height_ratios': [1, 2], 'hspace': 0.05})
+    fig.subplots_adjust(right=0.88)
 
-    text_info = ax.text(
-        0.84, 0.2, '', transform=ax.transAxes,
-        fontsize=11,
-        bbox=dict(facecolor='white', alpha=0.85, edgecolor='gray', boxstyle='round,pad=0.5'),
-        verticalalignment='top'
-    )
+    leak_line, = ax_leak.step([], [], where='post', color='blue', label='Найденный', linewidth=2.5)
+    ax_leak.step(x_data, compute_leakage_profile(x_data, true_boundaries['left'], true_boundaries['right'], Pe),
+                                   where='post', color='red', label='Истинный', linewidth=2.5)
 
-    return fig, ax, line, fill, text_info
+    temp_line, = ax_temp.plot([], [], color='blue', label='Найденный', linewidth=2)
+    ax_temp.plot(x_data, y_data_noize, color='red', label='Истинный', linewidth=2)
 
+    ax_leak.legend(frameon=False)
+    ax_leak.set_ylabel('ΔPe')
+    ax_leak.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
+    ax_leak.set_ylim(0, Pe[0])
 
-def init_animation(ax, line, text_info):
-    line.set_data([], [])
-    for coll in ax.collections[1:]:
-        coll.remove()
-    text_info.set_text('')
-    return line, text_info
+    ax_temp.legend(frameon=False)
+    ax_temp.set_xlabel('z/rw')
+    ax_temp.set_ylabel('θ')
+    ax_temp.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
 
+    fig.text(0.91, 0.755, 'Профиль утечки', va='center', ha='left',
+             rotation=-90, fontsize=16, fontweight='bold', color='black')
+    fig.text(0.91, 0.37, 'Температурный профиль', va='center', ha='left',
+             rotation=-90, fontsize=16, fontweight='bold', color='black')
 
-def update_animation(frame_idx, ax, line, fill, text_info, x_data, y_data, found_left, found_right, param_history):
-    # Получаем текущую строку из DataFrame по индексу
-    current_row = param_history.iloc[frame_idx]
+    fig.suptitle('Оптимизации профилей', fontsize=18, fontweight='bold', y=0.95)
 
-    # Собираем параметры Pe из колонок Pe_0, Pe_1, Pe_2, ...
-    pe_columns = [col for col in param_history.columns if col.startswith('Pe_')]
-    current_Pe = [current_row[col] for col in sorted(pe_columns, key=lambda x: int(x.split('_')[1]))]
-    print(current_Pe)
-    # Собираем параметры delta из колонок delta_0, delta_1, ...
-    delta_columns = [col for col in param_history.columns if col.startswith('delta_')]
-    current_deltas = {col: current_row[col] for col in sorted(delta_columns, key=lambda x: int(x.split('_')[1]))}
-    # Получаем метрики
-    chi_sq = current_row['Невязка']
-    iter_num = current_row['Итерация']
+    def init():
+        leak_line.set_data([], [])
+        temp_line.set_data([], [])
+        return leak_line, temp_line
 
-    # Вычисляем модельную кривую
-    y_fit = main_func(
-        x_data,
-        COMMON_CONSTANTS['TG0'],
-        COMMON_CONSTANTS['atg'],
-        COMMON_CONSTANTS['A'],
-        current_Pe,
-        found_left,
-        found_right
-    )
+    def update(frame):
+        row = df_history.iloc[frame]
+        Pe_columns = [col for col in df_history.columns if col.startswith('Pe_')]
+        Pe_middle = row[Pe_columns].values.tolist()
+        Pe_opt = [Pe[0]] + Pe_middle + [0]
 
-    # Обновляем графики
-    line.set_data(x_data, y_fit)
+        y_temp = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
+        leak_profile = compute_leakage_profile(x_data, found_left, found_right, Pe_opt)
 
-    # Очищаем предыдущую заливку
-    for coll in ax.collections[1:]:
-        coll.remove()
-    fill = ax.fill_between(x_data, y_data, y_fit, color='red', alpha=0.3)
+        leak_line.set_data(x_data, leak_profile)
+        temp_line.set_data(x_data, y_temp)
 
-    # Обновляем заголовок
-    ax.set_title(f'Подгонка кривой (Итерация {iter_num})')
-
-    # Формируем информационный текст
-    info_text = f"Итерация: {iter_num}\nНевязка: {chi_sq:.2e}\n"
-    for i, pe_val in enumerate(current_Pe):
-        info_text += f"Pe_{i}: {pe_val:.2f}\n"
-    for name, value in current_deltas.items():
-        info_text += f"{name}: {value:.2e}\n"
-
-    text_info.set_text(info_text)
-
-    return line, fill, text_info
-
-
-def run_ani(found_left, found_right, param_history, x_data, y_data):
-    fig, ax, line, fill, text_info = create_figure_and_axes(x_data, y_data)
-
-    ani = FuncAnimation(
-        fig,
-        lambda frame_idx: update_animation(
-            frame_idx, ax, line, fill, text_info,
-            x_data, y_data, found_left, found_right, param_history
-        ),
-        frames=len(param_history),
-        init_func=lambda: init_animation(ax, line, text_info),
-        blit=True,
-        interval=400,
-        repeat_delay=3000
-    )
-
-    plt.tight_layout()
+        return leak_line, temp_line
+    ani = FuncAnimation(fig, update, frames=len(df_history), init_func=init, blit=True, repeat=True)
     plt.show()
-
     return ani

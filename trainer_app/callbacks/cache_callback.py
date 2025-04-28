@@ -4,8 +4,7 @@ from optimizator.optimizer import run_optimization
 from regression.global_models import model_ws, model_ms
 from trainer_app.components.support_functions import extract_boundaries
 from regression.find_intervals import get_boundaries
-from calculates_block.data import generate_data, noize_data
-
+from main_block.data import generate_data, noize_data
 
 def register_cache_callback(app):
     @app.callback(
@@ -29,7 +28,7 @@ def register_cache_callback(app):
         x_data, y_data = generate_data(left_true, right_true, b_values, TG0, atg, A, N)
         y_data_noize = noize_data(y_data, sigma)
 
-        found_left, found_right = get_boundaries(x_data, y_data_noize, y_data_noize, b_values, N, sigma, A, model_ws, model_ms)
+        found_left, found_right = get_boundaries(x_data, y_data_noize, b_values, N, sigma, A, model_ws, model_ms)
         result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right, left_true,
                                               right_true, b_values, TG0, atg, A)
         boundaries_cache = {

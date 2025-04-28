@@ -2,9 +2,8 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Rectangle
 from sklearn.linear_model import LinearRegression
-from calculates_block.data import generate_data, smooth_data, data_norm, noize_data
-from regression.global_models import model_ws, model_ms
-from regression.optuna_search import predict_params
+from main_block.data import generate_data, smooth_data, data_norm, noize_data
+from regression.global_models import model_ws, model_ms, predict_params
 
 plt.rcParams.update({
     "font.family": "serif",
@@ -18,11 +17,11 @@ plt.rcParams.update({
 })
 
 # Параметры
-Pe = [2000, 1000, 0]
+Pe = [200, 100, 0]
 zInf = 100000
 TG0 = 1
 atg = 0.0001
-A = 5
+A = 2
 sigma = 0.001
 N = 500
 left_boundaries = [0, 150, 300]

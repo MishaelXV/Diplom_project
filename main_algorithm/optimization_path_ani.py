@@ -1,75 +1,103 @@
 import numpy as np
-from lmfit import Parameters
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-from calculates_block.main_functions import main_func
-from optimizator.optimizer import calculate_deviation_metric
+from scipy.integrate import simpson
+from optimizator.optimizer import compute_leakage_profile
 from main_algorithm.constants import COMMON_CONSTANTS
 
-def plot_optimization_path(df_history, Pe_true, found_left, found_right, x_data, y_data):
-    if len(df_history.columns) < 3:
-        print("Недостаточно параметров для построения контурного графика")
+TG0 = COMMON_CONSTANTS['TG0']
+atg = COMMON_CONSTANTS['atg']
+A = COMMON_CONSTANTS['A']
+Pe = COMMON_CONSTANTS['Pe']
+true_boundaries = COMMON_CONSTANTS['boundaries']
+
+plt.rcParams.update({
+        "font.family": "serif",
+        "font.serif": ["Times New Roman"],
+        "font.size": 14,
+        "axes.labelsize": 16,
+        "axes.titlesize": 18,
+        "legend.fontsize": 13,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+    })
+
+def calculate_metric(z, found_left, found_right, true_left, true_right, Pe_opt):
+    if len(found_left) <= 2:
+        Pe_opt = [Pe[0], 0]
+
+    step_opt = compute_leakage_profile(z, found_left, found_right, Pe_opt)
+    step_true = compute_leakage_profile(z, true_left, true_right, Pe)
+
+    squared_diff = np.abs(step_opt - step_true)
+
+    area = simpson(squared_diff)
+
+    L = max(z) - min(z)
+
+    metric = np.sqrt(area / L)
+
+    return metric
+
+
+def plot_optimization_path(df_history, found_left, found_right, x_data):
+    pe2_column = 'Pe_1'
+    pe3_column = 'Pe_2'
+
+    if pe2_column not in df_history.columns or pe3_column not in df_history.columns:
+        print(f"Ошибка: Один или оба столбца {pe2_column} или {pe3_column} отсутствуют в DataFrame.")
         return None
 
-    pe_columns = [col for col in df_history.columns if col.startswith('Pe_')]
-    if len(pe_columns) < 2:
-        print("Нужно минимум 2 параметра Pe для построения контурного графика")
-        return None
-
-    x_vals = np.linspace(0, Pe_true[0] * 1.5, 50)
-    y_vals = np.linspace(0, Pe_true[1] * 1.5, 50)
+    x_vals = np.linspace(0, Pe[0] + 500, 150)
+    y_vals = np.linspace(0, Pe[0] + 500, 150)
     X, Y = np.meshgrid(x_vals, y_vals)
-
     Z = np.zeros_like(X)
 
     for i in range(X.shape[0]):
         for j in range(X.shape[1]):
-            test_pe = [X[i, j], Y[i, j]] + [0]
-            params = Parameters()
-            for idx in range(len(test_pe) - 1):
-                params.add(f'Pe_{idx + 1}', value=test_pe[idx], min=0, max=30000)
-
-            model_func = lambda x_: main_func(params, x_, 100000, COMMON_CONSTANTS['TGO'], COMMON_CONSTANTS['atg'],
-                                              COMMON_CONSTANTS['A'], found_left, found_right)
-            try:
-                Z[i, j] = calculate_deviation_metric(model_func, x_data, y_data)
-            except Exception:
-                Z[i, j] = np.nan
-
+            Pe_opt = [Pe[0], X[i, j], Y[i, j], 0]
+            Z[i, j] = calculate_metric(x_data, found_left, found_right,
+                                                     true_boundaries['left'], true_boundaries['right'], Pe_opt)
     fig, ax = plt.subplots(figsize=(10, 8))
     cs = plt.contourf(X, Y, Z, levels=30, cmap='coolwarm', alpha=0.7)
-    plt.colorbar(cs, label="Отклонение модели")
+    plt.colorbar(cs, label="Невязка")
 
-    true_point = plt.scatter([Pe_true[0]], [Pe_true[1]], c='green', s=200,
+    plt.scatter([Pe[1]], [Pe[2]], c='green', s=200,
                              label="Истинные значения", edgecolor='black')
 
-    start_point = plt.scatter([df_history[pe_columns[0]].iloc[0]],
-                              [df_history[pe_columns[1]].iloc[0]],
+    plt.scatter([df_history[pe2_column].iloc[0]],
+                              [df_history[pe3_column].iloc[0]],
                               c='blue', s=100, marker='o', label="Начальная точка")
 
     path_line, = plt.plot([], [], linestyle='-', linewidth=2, label="Траектория")
-    current_point = plt.scatter([df_history[pe_columns[0]].iloc[0]],
-                                [df_history[pe_columns[1]].iloc[0]],
+    current_point = plt.scatter([df_history[pe2_column].iloc[0]],
+                                [df_history[pe3_column].iloc[0]],
                                 c='red', s=100, marker='o', label="Текущая позиция")
 
-    plt.xlabel(pe_columns[0], fontsize=12)
-    plt.ylabel(pe_columns[1], fontsize=12)
-    plt.title("Траектория поиска минимума", fontsize=14)
-    plt.legend(fontsize=10)
+    plt.xlabel('Pe_2')
+    plt.ylabel('Pe_3')
+    plt.title("Траектория поиска минимума")
+    plt.legend(frameon=False)
     plt.grid(True, alpha=0.3)
 
     def init():
         path_line.set_data([], [])
-        current_point.set_offsets(np.array([[df_history[pe_columns[0]].iloc[0],
-                                             df_history[pe_columns[1]].iloc[0]]]))
+        current_point.set_offsets(np.array([[df_history[pe2_column].iloc[0],
+                                             df_history[pe3_column].iloc[0]]]))
         return path_line, current_point
 
     def update(frame):
         if frame >= len(df_history):
             frame = len(df_history) - 1
 
-        x_path = df_history[pe_columns[0]].values[:frame + 1]
-        y_path = df_history[pe_columns[1]].values[:frame + 1]
+        x_path = df_history[pe2_column].values[:frame + 1]
+        y_path = df_history[pe3_column].values[:frame + 1]
+
+        Pe_max = Pe[0]
+        Pe_min = 0
+
+        x_path = np.clip(x_path, Pe_min, Pe_max)
+        y_path = np.clip(y_path, Pe_min, Pe_max)
 
         path_line.set_data(x_path, y_path)
         current_point.set_offsets(np.array([[x_path[-1], y_path[-1]]]))

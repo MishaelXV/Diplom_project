@@ -1,8 +1,8 @@
 import dash
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
-from calculates_block.data import generate_data, noize_data
-from calculates_block.data import save_temperature_values
+from main_block.data import generate_data, noize_data
+from main_block.data import save_temperature_values
 from trainer_app.components.graphs import create_figure_direct_task
 from trainer_app.components.valid_inputs_of_params import validate_inputs
 

@@ -39,10 +39,10 @@ def plot_histograms(df, N_samples, output_dir):
         plt.figure(figsize=(10, 6))
         subset = df[df["N_samples"] == n]
         sns.histplot(subset["deviation_metric"], kde=True, bins=30,
-                     color='skyblue', edgecolor='black', linewidth=1.2)
+                     color='skyblue', edgecolor='black', linewidth=1.2, kde_kws={"color": "darkblue", "lw": 2})
         plt.xlabel('Невязка')
         plt.ylabel('Значения')
-        plt.title('Распределение невязки')
+        plt.title('Распределение невязки решения')
         plt.grid(True, linestyle='--', linewidth=0.5)
         plt.tight_layout()
         plt.savefig(f"{output_dir}/histogram_n_{n}.png", bbox_inches='tight')
@@ -98,11 +98,10 @@ def plot_boxplot(df, output_dir, hue, title):
         palette="muted")
     plt.title(title, fontsize=18)
     plt.xlabel("Уровень шума σ", fontsize=16)
-    plt.ylabel("Площадь отклонения профиля", fontsize=16)
+    plt.ylabel("Невязка", fontsize=16)
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
     plt.legend(frameon=False, fontsize=13)
-    plt.grid(True, linestyle='--', linewidth=0.5)
     plt.tight_layout()
     plt.savefig(f"{output_dir}/boxplot_graph.png", dpi=300, format="png", bbox_inches='tight')
     plt.close()
@@ -117,11 +116,10 @@ def plot_violinplot(df, output_dir, hue, title):
     )
     plt.title(title, fontsize=18)
     plt.xlabel("Уровень шума σ", fontsize=16)
-    plt.ylabel("Площадь отклонения профиля", fontsize=16)
+    plt.ylabel("Невязка", fontsize=16)
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
     plt.legend(frameon=False, fontsize=13)
-    plt.grid(True, linestyle='--', linewidth=0.5)
     plt.ylim(0, None)
     plt.tight_layout()
     plt.savefig(f"{output_dir}/violinplot_graph.png", dpi=300, format="png", bbox_inches='tight')
@@ -187,14 +185,12 @@ def plot_barplot(df, output_dir, title="Сравнение методов опт
 
 def plot_applicability_heatmap(df, output_path):
     set_plot_style()
-    # Округляем значения метрики до 2 знаков для группировки
+
     df["rounded_dev"] = df["mean_deviation"].round(2)
 
-    # Уникальные значения по осям
     x_vals = np.sort(df["Pe0"].unique())
     y_vals = np.sort(df["A"].unique())
 
-    # Сетка значений
     z_grid = np.full((len(y_vals), len(x_vals)), np.nan)
 
     for i, a in enumerate(y_vals):
@@ -205,26 +201,22 @@ def plot_applicability_heatmap(df, output_path):
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # Используем imshow с интерполяцией для плавности
     c = ax.imshow(
         z_grid,
-        cmap='plasma',
-        interpolation='bilinear',
+        cmap='Blues',
+        interpolation='none',
         aspect='auto',
         extent=[x_vals.min(), x_vals.max(), y_vals.min(), y_vals.max()],
         origin='lower'
     )
 
-    # Цветовая шкала
     cbar = fig.colorbar(c, ax=ax)
-    cbar.set_label("Невязка", fontsize=12)
+    cbar.set_label("Невязка", fontsize=14)
 
-    # Подписи и оформление
-    ax.set_title("Карта применимости", fontsize=14)
-    ax.set_xlabel("Pe", fontsize=12)
-    ax.set_ylabel("A", fontsize=12)
+    ax.set_title("Карта применимости модели")
+    ax.set_xlabel("Pe")
+    ax.set_ylabel("A",)
 
-    # Настраиваем деления осей
     ax.set_xticks(np.linspace(x_vals.min(), x_vals.max(), min(10, len(x_vals))))
     ax.set_yticks(np.linspace(y_vals.min(), y_vals.max(), min(10, len(y_vals))))
 
@@ -232,5 +224,5 @@ def plot_applicability_heatmap(df, output_path):
     ax.tick_params(labelsize=10)
 
     plt.tight_layout()
-    plt.savefig(output_path)
+    plt.savefig(output_path, dpi=300)
     plt.close()

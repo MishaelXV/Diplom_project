@@ -1,5 +1,5 @@
 import numpy as np
-from calculates_block.main_functions import main_func
+from main_block.main_functions import main_func
 from scipy.signal import medfilt
 from pathlib import Path
 
@@ -17,21 +17,19 @@ def save_temperature_values(T_all, filename):
             file.write(f"{value}\n")
 
 
-def data_norm(x_data, y_data, y_data_noize):
+def data_norm(x_data, y_data_noize):
     z_min, z_max = x_data.min(), x_data.max()
     z_norm = (x_data - z_min) / (z_max - z_min)
 
-    T_min, T_max = y_data.min(), y_data.max()
-    T_true_norm = (y_data - T_min) / (T_max - T_min)
+    T_min, T_max = y_data_noize.min(), y_data_noize.max()
     T_noisy_norm = (y_data_noize - T_min) / (T_max - T_min)
 
-    return z_norm, T_true_norm, T_noisy_norm
+    return z_norm, T_noisy_norm
 
 
 def generate_data(left_boundaries, right_boundaries, Pe, TG0, atg, A, N):
     x_data = np.linspace(min(left_boundaries), max(right_boundaries), N)
     y_data = main_func(x_data, TG0, atg, A, Pe, left_boundaries, right_boundaries)
-
     return x_data, y_data
 
 
@@ -41,6 +39,12 @@ def noize_data(y_data, sigma):
 
 
 def smooth_data(T_all):
-    window_size = 71
+    n = len(T_all)
+    if n > 800:
+        window_size = 171
+    elif n > 2000:
+        window_size = 371
+    else:
+        window_size = 71
     smoothed = medfilt(T_all, kernel_size = window_size)
     return smoothed

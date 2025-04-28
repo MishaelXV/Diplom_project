@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from lmfit import minimize
 from joblib import Parallel, delayed
-from calculates_block.data import generate_data, noize_data
+from main_block.data import generate_data, noize_data
 from optimizator.optimizer import run_optimization, calculate_deviation_metric, optimization_residuals, \
     optimization_callback, create_parameters
 from regression.find_intervals import get_boundaries
@@ -44,12 +44,17 @@ def process_std_run(n, sigma):
         Pe, TG0, atg, A, n)
     y_data_noize = noize_data(y_data, sigma)
 
-    found_left, found_right = get_boundaries(x_data, y_data, y_data_noize, Pe, n, sigma, A,  model_ws, model_ms)
+    found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, n, sigma, A,  model_ws, model_ms)
+    if len(found_left) <= 2:
+        Pe_opt = [Pe[0], 0]
 
-    result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+        deviation_metric = calculate_deviation_metric(Pe_opt, x_data, found_left, found_right,
+                                                      boundary_dict['left'], boundary_dict['right'], Pe)
+    else:
+        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
                                           boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
 
-    deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
+        deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
                                                   boundary_dict['left'], boundary_dict['right'], Pe)
 
     return {
@@ -92,7 +97,7 @@ def process_optimizer_run(method, sigma, n):
         Pe, TG0, atg, A, n)
     y_data_noize = noize_data(y_data, sigma)
 
-    found_left, found_right = get_boundaries(x_data, y_data, y_data_noize, Pe, n, sigma, A, model_ws, model_ms)
+    found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, n, sigma, A, model_ws, model_ms)
     params = create_parameters(found_left, COMMON_CONSTANTS['Pe'][0])
 
     param_history = []
@@ -122,7 +127,7 @@ def process_optimizer_run(method, sigma, n):
     }
 
 
-def run_optimizers_analysis(variables, output_dir, n_jobs=-1):
+def run_optimizers_analysis(variables, output_dir, n_jobs=5):
     config = STABILITY_CONFIGS["stability_optimaizers"]
 
     tasks = [(method, sigma, variables["N_samples"])
@@ -158,12 +163,18 @@ def process_n_samples_run(n, sigma):
         Pe, TG0, atg, A, n)
     y_data_noize = noize_data(y_data, sigma)
 
-    found_left, found_right = get_boundaries(x_data, y_data, y_data_noize, Pe, n, sigma, A, model_ws, model_ms)
+    found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, n, sigma, A, model_ws, model_ms)
 
-    result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+    if len(found_left) <= 2:
+        Pe_opt = [Pe[0], 0]
+
+        deviation_metric = calculate_deviation_metric(Pe_opt, x_data, found_left, found_right,
+                                                      boundary_dict['left'], boundary_dict['right'], Pe)
+    else:
+        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
                                                          boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
 
-    deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
+        deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
                                                   boundary_dict['left'], boundary_dict['right'], Pe)
 
     return {
@@ -203,35 +214,35 @@ def run_n_samples_analysis(variables, output_dir, n_jobs=-1):
     return df
 
 
-def process_A_run(a_value, sigma, n):
-    original_A = A
-    COMMON_CONSTANTS["A"] = a_value
-
+def process_A_run(A_value, sigma, n):
     x_data, y_data = generate_data(
         boundary_dict["left"],
         boundary_dict["right"],
-        Pe, TG0, atg, COMMON_CONSTANTS["A"], n)
+        Pe, TG0, atg, A_value, n)
     y_data_noize = noize_data(y_data, sigma)
 
-    found_left, found_right = get_boundaries(x_data, y_data, y_data_noize, Pe, n, sigma, COMMON_CONSTANTS["A"], model_ws,
-                                             model_ms)
+    found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, n, sigma, A_value, model_ws, model_ms)
 
-    result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
-                                          boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
+    if len(found_left) <= 2:
+        Pe_opt = [Pe[0], 0]
 
-    deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
+        deviation_metric = calculate_deviation_metric(Pe_opt, x_data, found_left, found_right,
+                                                      boundary_dict['left'], boundary_dict['right'], Pe)
+    else:
+        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+                                              boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A_value)
+
+        deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
                                                   boundary_dict['left'], boundary_dict['right'], Pe)
-
-    COMMON_CONSTANTS["A"] = original_A
 
     return {
         "sigma": sigma,
-        "A": a_value,
+        "A": A_value,
         "deviation_metric": deviation_metric
     }
 
 
-def run_A_analysis(variables, output_dir, n_jobs=-1):
+def run_A_analysis(variables, output_dir, n_jobs=5):
     config = STABILITY_CONFIGS["stability_A"]
 
     tasks = [(a_value, sigma, variables["N_samples"])
@@ -258,35 +269,42 @@ def run_A_analysis(variables, output_dir, n_jobs=-1):
     return df
 
 
-def process_applicability_run(pe0_value, a_value, sigma, n, N_rnd):
+def process_applicability_run(Pe_1, A_value, sigma, n, N_rnd):
     deviations = []
-    original_A = COMMON_CONSTANTS["A"]
-    Pe_mod = Pe.copy()
-    Pe_mod[0] = pe0_value
-    COMMON_CONSTANTS["A"] = a_value
+
+    Pe_list = [Pe_1]
+    for _ in range(1, len(boundary_dict["left"])):
+        Pe_list.append(0.5 * Pe_list[-1])
 
     for _ in range(N_rnd):
         x_data, y_data = generate_data(
             boundary_dict["left"],
             boundary_dict["right"],
-            Pe, TG0, atg, A, n)
+            Pe_list, TG0, atg, A_value, n)
         y_data_noize = noize_data(y_data, sigma)
 
-        found_left, found_right = get_boundaries(x_data, y_data, y_data_noize, Pe, n, sigma, A, model_ws, model_ms)
+        found_left, found_right = get_boundaries(x_data, y_data_noize, Pe_list, n,
+                                                 sigma, A_value, model_ws, model_ms)
 
-        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
-                                              boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
+        if len(found_left) <= 2:
+            Pe_opt = [Pe[0], 0]
 
-        deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
-                                                      boundary_dict['left'], boundary_dict['right'], Pe)
+            deviation_metric = calculate_deviation_metric(Pe_opt, x_data, found_left, found_right,
+                                                boundary_dict['left'], boundary_dict['right'], Pe_list)
+        else:
+            result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+                                                  boundary_dict['left'], boundary_dict['right'],
+                                                  Pe_list, TG0, atg, A_value)
+
+            deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
+                                                          boundary_dict['left'], boundary_dict['right'],
+                                                          Pe_list)
 
         deviations.append(deviation_metric)
 
-    COMMON_CONSTANTS["A"] = original_A
-
     return {
-        "Pe0": pe0_value,
-        "A": a_value,
+        "Pe0": Pe_1,
+        "A": A_value,
         "mean_deviation": np.mean(deviations)
     }
 

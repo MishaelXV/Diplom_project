@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from calculates_block.data import smooth_data, data_norm, generate_data, noize_data
+from main_block.data import smooth_data, data_norm, generate_data, noize_data
 from regression.global_models import model_ws, model_ms, predict_params
 from regression.metrics import calculate_mae, calculate_mse, calculate_rmse, calculate_relative_mae
 
@@ -115,16 +115,9 @@ def remove_short_intervals(start_indices, end_indices, z_norm, min_length=0.01):
     return filtered_starts, filtered_ends
 
 
-def add_zero_boundaries_if_only_one_found(left_boundaries, right_boundaries):
-    if len(left_boundaries) == 1:
-        left_boundaries.insert(0, 0)
-        right_boundaries.insert(0, 10)
-    return left_boundaries, right_boundaries
-
-
-def get_boundaries(x_data, y_data, y_data_noize, Pe, N, sigma, A, model_ws=None, model_ms=None,
+def get_boundaries(x_data, y_data_noize, Pe, N, sigma, A, model_ws=None, model_ms=None,
                    fixed_ws=None, fixed_ms=None):
-    z_norm, T_true_norm, T_noisy_norm = data_norm(x_data, y_data, y_data_noize)
+    z_norm, T_noisy_norm = data_norm(x_data, y_data_noize)
 
     T_smooth = smooth_data(T_noisy_norm)
     filtered_intervals = find_growth_intervals(
@@ -137,8 +130,6 @@ def get_boundaries(x_data, y_data, y_data_noize, Pe, N, sigma, A, model_ws=None,
     starts, ends = merge_growth_intervals_by_gap(starts, ends, z_norm, max_gap=0.01)
     starts, ends = remove_short_intervals(starts, ends, z_norm, min_length=0.01)
     left_boundaries, right_boundaries = process_detected_boundaries(starts, ends, z_norm, x_data)
-    # left_boundaries, right_boundaries = adjust_interval_counts(boundary_dict['left'], left_boundaries, right_boundaries)
-    left_boundaries, right_boundaries = add_zero_boundaries_if_only_one_found(left_boundaries, right_boundaries)
     return left_boundaries, right_boundaries
 
 
@@ -158,10 +149,10 @@ def plot_data(z_norm, T_smooth, start_indices, end_indices):
 
 # тестовый пример
 def main():
-    boundary_dict = {'left': [0, 150, 300], 'right': [100, 250, 350]}
-    Pe = [20000, 10000, 0]
-    N = 500
-    sigma = 0.05
+    boundary_dict = {'left': [0, 150, 300, 400], 'right': [100, 250, 350, 600]}
+    Pe = [16000, 10000, 5000, 0]
+    N = 1000
+    sigma = 0.001
     TG0 = 1
     atg = 0.0001
     A = 2
@@ -169,10 +160,10 @@ def main():
     x_data, y_data = generate_data(boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, N)
     y_data_noize = noize_data(y_data, sigma)
 
-    found_left, found_right = get_boundaries(x_data, y_data, y_data_noize, Pe, N, sigma, A, model_ws, model_ms)
+    found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, N, sigma, A, model_ws, model_ms)
     print(found_left, found_right)
 
-    z_norm, T_true_norm, T_noisy_norm = data_norm(x_data, y_data, y_data_noize)
+    z_norm, T_noisy_norm = data_norm(x_data, y_data_noize)
     T_smooth = smooth_data(T_noisy_norm)
 
     filtered_intervals = find_growth_intervals(

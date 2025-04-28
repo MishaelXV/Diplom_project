@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 import numpy as np
-from calculates_block.main_functions import geoterma
-from calculates_block.main_functions import main_func
+from main_block.main_functions import geoterma
+from main_block.main_functions import main_func
 from optimizator.optimizer import optimization_residuals
 
 def create_figure_direct_task(z_all, T_all, T_all_noisy, left_boundary, right_boundary, TG0, atg, a):

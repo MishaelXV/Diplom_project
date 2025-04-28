@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.integrate import simpson
 from lmfit import minimize, Parameters
-from calculates_block.main_functions import main_func, reconstruct_Pe_list
+from main_block.main_functions import main_func, reconstruct_Pe_list
 
 def process_results(param_history):
     df = pd.DataFrame(param_history, columns=['parameters', 'Невязка', 'Итерация'])
@@ -41,10 +41,7 @@ def calculate_deviation_metric(params, z, found_left, found_right, true_left, tr
     step_opt = compute_leakage_profile(z, found_left, found_right, Pe_opt)
     step_true = compute_leakage_profile(z, true_left, true_right, Pe_true)
 
-    norm_factor = np.max(np.abs(step_true))
-    norm_factor = norm_factor if norm_factor != 0 else 1.0
-
-    squared_diff = ((step_opt - step_true) / norm_factor) ** 2
+    squared_diff = np.abs(step_opt - step_true)
 
     area = simpson(squared_diff)
 
@@ -94,7 +91,3 @@ def run_optimization(x_data, y_data, found_left, found_right, true_left, true_ri
 
     df_history = process_results(param_history)
     return result, df_history
-
-
-
-

@@ -4,7 +4,7 @@ import pandas as pd
 import optuna
 from tqdm import tqdm
 from sklearn.linear_model import LinearRegression
-from calculates_block.data import smooth_data, generate_data
+from main_block.data import smooth_data, generate_data
 from regression.find_intervals import get_interval_boundaries
 from regression.metrics import calculate_boundary_errors
 from joblib import Parallel, delayed

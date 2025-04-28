@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from joblib import Parallel, delayed
 from tqdm import tqdm
-from calculates_block.data import generate_data, noize_data
+from main_block.data import generate_data, noize_data
 from regression.find_intervals import get_boundaries
 from regression.global_models import load_training_data
 from regression.metrics import calculate_mae, calculate_relative_mae, calculate_rmse, calculate_mse
@@ -50,11 +50,11 @@ def _single_evaluation(predict_ws, predict_ms, boundary_dict, Pe, N, sigma, TG0,
     y_data_noize = noize_data(y_data, sigma)
 
     if use_fixed:
-        left, right = get_boundaries( x_data, y_data, y_data_noize, Pe, N, sigma, A,
+        left, right = get_boundaries(x_data, y_data_noize, Pe, N, sigma, A,
             fixed_ws=predict_ws, fixed_ms=predict_ms
         )
     else:
-        left, right = get_boundaries( x_data, y_data, y_data_noize, Pe, N, sigma, A,
+        left, right = get_boundaries(x_data, y_data_noize, Pe, N, sigma, A,
             model_ws=predict_ws, model_ms=predict_ms
         )
 
@@ -146,14 +146,14 @@ def plot_results(results_df):
 
 
 def main():
-    boundary_dict = {'left': [0, 150, 300], 'right': [100, 250, 400]}
-    Pe = [2000, 1000, 0]
+    boundary_dict = {'left': [0, 150, 300, 450], 'right': [100, 250, 400, 550]}
+    Pe = [5000, 2000, 1000, 0]
     N = 300
     sigma = 0.001
     TG0 = 1
     atg = 0.0001
-    A = 10
-    n_runs = 1
+    A = 5
+    n_runs = 1000
 
     df = load_training_data()
     results = compare_models(df, boundary_dict, Pe, N, sigma, TG0, atg, A, n_runs)
