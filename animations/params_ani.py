@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from main_algorithm.constants import COMMON_CONSTANTS
+from animations.constants import COMMON_CONSTANTS
 
 plt.rcParams.update({
     "font.family": "serif",

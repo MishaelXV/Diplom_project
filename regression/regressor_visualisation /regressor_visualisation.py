@@ -25,11 +25,11 @@ A = 2
 sigma = 0.001
 N = 500
 left_boundaries = [0, 150, 300]
-right_boundaries = [100, 250, 400]
+right_boundaries = [100, 250, 350]
 
 x_data, y_data = generate_data(left_boundaries, right_boundaries, Pe, TG0, atg, A, N)
 y_data_noize = noize_data(y_data, sigma)
-z_norm, T_true_norm, T_noisy_norm = data_norm(x_data, y_data, y_data_noize)
+z_norm, T_noisy_norm = data_norm(x_data, y_data_noize)
 T_smooth_norm = smooth_data(T_noisy_norm)
 
 window_size, min_slope = predict_params(Pe[0], A, sigma, N, model_ws, model_ms)
@@ -153,4 +153,4 @@ ani = FuncAnimation(fig, update, frames=range(len(z_norm) - window_size + 1),
 
 plt.tight_layout()
 plt.show()
-# ani.save('norm_animation.gif', writer='pillow', fps=15)
+ani.save('regressor_animation.gif', writer='pillow', fps=15)

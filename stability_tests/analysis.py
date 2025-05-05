@@ -1,33 +1,26 @@
+import os
 import pandas as pd
 import numpy as np
 import warnings
 import time
-import matplotlib.pyplot as plt
 from tqdm import tqdm
-from lmfit import minimize
 from joblib import Parallel, delayed
 from main_block.data import generate_data, noize_data
-from optimizator.optimizer import run_optimization, calculate_deviation_metric, optimization_residuals, \
-    optimization_callback, create_parameters
+from main_block.main_functions import main_func
+from optimizator.bayes_optimizer import run_bayes_optimization
+from optimizator.optimizer import run_optimization, calculate_deviation_metric
 from regression.find_intervals import get_boundaries
 from regression.global_models import model_ws, model_ms
-from stability_tests.config import COMMON_CONSTANTS
-from config import STABILITY_CONFIGS
+from stability_tests.config import COMMON_CONSTANTS, STABILITY_CONFIGS
 from stability_tests.plots import plot_boxplot, plot_violinplot, plot_mean_differences, plot_histograms, \
     plot_std_deviation, plot_barplot, plot_applicability_heatmap
 
 warnings.filterwarnings('ignore', category=RuntimeWarning)
-plt.rcParams.update({
-    "font.family": "serif",
-    "font.serif": ["Times New Roman"],
-    "font.size": 14,
-    "axes.labelsize": 16,
-    "axes.titlesize": 18,
-    "legend.fontsize": 13,
-    "xtick.labelsize": 12,
-    "ytick.labelsize": 12,
-    "figure.dpi": 300
-})
+
+def save_dataframe(df, config_name):
+    output_dir = STABILITY_CONFIGS[config_name]["output_dir"]
+    os.makedirs(output_dir, exist_ok=True)
+    df.to_csv(os.path.join(output_dir, f"{config_name}_results.csv"), index=False)
 
 # Общие константы
 zInf = COMMON_CONSTANTS['zInf']
@@ -37,6 +30,7 @@ A = COMMON_CONSTANTS['A']
 Pe = COMMON_CONSTANTS['Pe']
 boundary_dict = COMMON_CONSTANTS['boundaries']
 
+
 def process_std_run(n, sigma):
     x_data, y_data = generate_data(
         boundary_dict["left"],
@@ -45,17 +39,19 @@ def process_std_run(n, sigma):
     y_data_noize = noize_data(y_data, sigma)
 
     found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, n, sigma, A,  model_ws, model_ms)
-    if len(found_left) <= 2:
+
+    if len(found_left) == 1:
+        Pe_opt = [0]
+
+    elif len(found_left) <= 2:
         Pe_opt = [Pe[0], 0]
 
-        deviation_metric = calculate_deviation_metric(Pe_opt, x_data, found_left, found_right,
-                                                      boundary_dict['left'], boundary_dict['right'], Pe)
     else:
-        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+        Pe_opt, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
                                           boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
 
-        deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
-                                                  boundary_dict['left'], boundary_dict['right'], Pe)
+    deviation_metric = calculate_deviation_metric(x_data, found_left, found_right,
+                                        boundary_dict['left'], boundary_dict['right'], Pe, Pe_opt)
 
     return {
         "N_samples": n,
@@ -79,6 +75,7 @@ def run_std_n_samples_analysis(variables, output_dir, n_jobs=-1):
         )
 
     df = pd.DataFrame(results)
+    save_dataframe(df, "stability_std_N_samples")
 
     if "std_deviation" in config["plots"]:
         plot_std_deviation(df, variables, output_dir)
@@ -98,36 +95,34 @@ def process_optimizer_run(method, sigma, n):
     y_data_noize = noize_data(y_data, sigma)
 
     found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, n, sigma, A, model_ws, model_ms)
-    params = create_parameters(found_left, COMMON_CONSTANTS['Pe'][0])
-
-    param_history = []
-
     start_time = time.time()
 
-    result = minimize(
-        lambda p, x, y: optimization_residuals(p, x, y, TG0, atg, A, Pe, found_left, found_right),
-        params,
-        args=(x_data, y_data_noize),
-        method=method,
-        iter_cb=lambda p, i, r, *a, **kw: optimization_callback(
-            p, i, r, param_history, x_data, found_left, found_right, boundary_dict["left"], boundary_dict["right"], Pe),
-        nan_policy='omit'
-    )
+    if method == "bayes":
+        Pe_opt = run_bayes_optimization(x_data, y_data_noize, found_left, found_right, Pe, TG0, atg, A, n_trials=100)
+
+    else:
+        Pe_opt, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+                                  boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, method)
+
+    deviation_metric = calculate_deviation_metric(
+        x_data, found_left, found_right,
+        boundary_dict['left'], boundary_dict['right'], Pe, Pe_opt)
+
+    E = np.sum((main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right) - y_data_noize)**2)
 
     elapsed_time = time.time() - start_time
-
-    deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right, boundary_dict['left'], boundary_dict['right'], Pe)
 
     return {
         "sigma": sigma,
         "N_samples": n,
         "deviation_metric": deviation_metric,
+        "E": E,
         "elapsed_time": elapsed_time,
         "Метод оптимизации": method
     }
 
 
-def run_optimizers_analysis(variables, output_dir, n_jobs=5):
+def run_optimizers_analysis(variables, output_dir, n_jobs=-1):
     config = STABILITY_CONFIGS["stability_optimaizers"]
 
     tasks = [(method, sigma, variables["N_samples"])
@@ -143,6 +138,7 @@ def run_optimizers_analysis(variables, output_dir, n_jobs=5):
 
     df = pd.DataFrame(results)
     df['Метод оптимизации'] = df['Метод оптимизации'].replace({'leastsq': 'lm'})
+    save_dataframe(df, "stability_optimaizers")
 
     if "boxplot" in config["plots"]:
         plot_boxplot(df, output_dir, hue="Метод оптимизации",
@@ -165,17 +161,18 @@ def process_n_samples_run(n, sigma):
 
     found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, n, sigma, A, model_ws, model_ms)
 
-    if len(found_left) <= 2:
+    if len(found_left) == 1:
+        Pe_opt = [0]
+
+    elif len(found_left) <= 2:
         Pe_opt = [Pe[0], 0]
 
-        deviation_metric = calculate_deviation_metric(Pe_opt, x_data, found_left, found_right,
-                                                      boundary_dict['left'], boundary_dict['right'], Pe)
     else:
-        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
-                                                         boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
+        Pe_opt, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+                                                         boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, method='nelder')
 
-        deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
-                                                  boundary_dict['left'], boundary_dict['right'], Pe)
+    deviation_metric = calculate_deviation_metric(x_data, found_left, found_right,
+                                        boundary_dict['left'], boundary_dict['right'], Pe, Pe_opt)
 
     return {
         "N_samples": n,
@@ -199,6 +196,7 @@ def run_n_samples_analysis(variables, output_dir, n_jobs=-1):
         )
 
     df = pd.DataFrame(results)
+    save_dataframe(df, "stability_N_samples")
 
     if "boxplot" in config["plots"]:
         plot_boxplot(df, output_dir, hue="N_samples",
@@ -223,17 +221,18 @@ def process_A_run(A_value, sigma, n):
 
     found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, n, sigma, A_value, model_ws, model_ms)
 
-    if len(found_left) <= 2:
+    if len(found_left) == 1:
+        Pe_opt = [0]
+
+    elif len(found_left) <= 2:
         Pe_opt = [Pe[0], 0]
 
-        deviation_metric = calculate_deviation_metric(Pe_opt, x_data, found_left, found_right,
-                                                      boundary_dict['left'], boundary_dict['right'], Pe)
     else:
-        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+        Pe_opt, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
                                               boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A_value)
 
-        deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
-                                                  boundary_dict['left'], boundary_dict['right'], Pe)
+    deviation_metric = calculate_deviation_metric(x_data, found_left, found_right,
+                                        boundary_dict['left'], boundary_dict['right'], Pe, Pe_opt)
 
     return {
         "sigma": sigma,
@@ -258,6 +257,7 @@ def run_A_analysis(variables, output_dir, n_jobs=5):
 
     df = pd.DataFrame(results)
     df['sigma'] = df['sigma'].round(4)
+    save_dataframe(df, "stability_A")
 
     if "boxplot" in config["plots"]:
         plot_boxplot(df, output_dir, hue="A",
@@ -285,20 +285,19 @@ def process_applicability_run(Pe_1, A_value, sigma, n, N_rnd):
 
         found_left, found_right = get_boundaries(x_data, y_data_noize, Pe_list, n,
                                                  sigma, A_value, model_ws, model_ms)
+        if len(found_left) == 1:
+            Pe_opt = [0]
 
-        if len(found_left) <= 2:
+        elif len(found_left) <= 2:
             Pe_opt = [Pe[0], 0]
 
-            deviation_metric = calculate_deviation_metric(Pe_opt, x_data, found_left, found_right,
-                                                boundary_dict['left'], boundary_dict['right'], Pe_list)
         else:
-            result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+            Pe_opt, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
                                                   boundary_dict['left'], boundary_dict['right'],
                                                   Pe_list, TG0, atg, A_value)
 
-            deviation_metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
-                                                          boundary_dict['left'], boundary_dict['right'],
-                                                          Pe_list)
+        deviation_metric = calculate_deviation_metric(x_data, found_left, found_right,
+                                        boundary_dict['left'], boundary_dict['right'], Pe, Pe_opt)
 
         deviations.append(deviation_metric)
 
@@ -329,8 +328,7 @@ def run_applicability_map_analysis(variables, output_dir, n_jobs=-1):
         )
 
     df = pd.DataFrame(results)
-
-    df.to_csv(f"{output_dir}/applicability_map_results.csv", index=False)
+    save_dataframe(df, "stability_applicability_map")
 
     if STABILITY_CONFIGS["stability_applicability_map"]["plots"]:
         plot_applicability_heatmap(df, f"{output_dir}/applicability_map_heatmap.png")

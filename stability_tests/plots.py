@@ -26,26 +26,32 @@ def plot_histograms(df, N_samples, output_dir):
                  alpha=0.5, color=palette[idx],
                  label=f'N={n}', edgecolor='black', linewidth=0.8)
 
-    plt.xlabel('Невязка')
+    plt.xlabel('J')
     plt.ylabel('Значения')
-    plt.title('Распределение невязки решения')
+    plt.title('Распределение J')
     plt.legend(frameon=False)
     plt.grid(True, linestyle='--', linewidth=0.5)
     plt.tight_layout()
     plt.savefig(f"{output_dir}/histogram_combined.png", bbox_inches='tight')
+    plt.savefig(f"{output_dir}/histogram_combined.pdf", bbox_inches='tight')
     plt.close()
 
     for n in N_samples:
         plt.figure(figsize=(10, 6))
         subset = df[df["N_samples"] == n]
-        sns.histplot(subset["deviation_metric"], kde=True, bins=30,
-                     color='skyblue', edgecolor='black', linewidth=1.2, kde_kws={"color": "darkblue", "lw": 2})
-        plt.xlabel('Невязка')
+        sns.histplot(subset["deviation_metric"], bins=30,
+                     color='skyblue', edgecolor='black', linewidth=1.2)
+        sns.kdeplot(
+            subset["deviation_metric"],
+            color='darkblue',
+            linewidth=2)
+        plt.xlabel('J')
         plt.ylabel('Значения')
         plt.title('Распределение невязки решения')
         plt.grid(True, linestyle='--', linewidth=0.5)
         plt.tight_layout()
         plt.savefig(f"{output_dir}/histogram_n_{n}.png", bbox_inches='tight')
+        plt.savefig(f"{output_dir}/histogram_n_{n}.pdf", bbox_inches='tight')
         plt.close()
 
 
@@ -59,11 +65,12 @@ def plot_mean_differences(df, variables, output_dir):
                 label=f'N={n}', linewidth=2, markersize=5)
     plt.xlabel('Уровень шума')
     plt.ylabel('Матожидание')
-    plt.title('Матожидание невязки решения от уровня шума для разного числа замеров')
+    plt.title('Матожидание J от уровня шума для разного числа замеров')
     plt.legend(frameon=False)
     plt.grid(True, linestyle='--', linewidth=0.5)
     plt.tight_layout()
     plt.savefig(f"{output_dir}/mean_deviation.png", bbox_inches='tight')
+    plt.savefig(f"{output_dir}/mean_deviation.pdf", bbox_inches='tight')
     plt.close()
 
 
@@ -82,11 +89,12 @@ def plot_std_deviation(df, variables, output_dir):
 
     plt.xlabel('Уровень шума')
     plt.ylabel('Стандартное отклонение')
-    plt.title('Стандартное отклонение невязки решения от уровня шума для разного числа замеров')
+    plt.title('Стандартное отклонение J от уровня шума для разного числа замеров')
     plt.legend(frameon=False)
     plt.grid(True, linestyle='--', linewidth=0.5)
     plt.tight_layout()
     plt.savefig(f"{output_dir}/std_deviation.png", bbox_inches='tight', dpi=300)
+    plt.savefig(f"{output_dir}/std_deviatio.pdf", bbox_inches='tight')
     plt.close()
 
 
@@ -95,15 +103,16 @@ def plot_boxplot(df, output_dir, hue, title):
     plt.figure(figsize=(10, 6))
     sns.boxplot(
         x="sigma", y="deviation_metric", data=df, hue=hue,
-        palette="muted")
+        palette="muted", gap = 0.1)
     plt.title(title, fontsize=18)
     plt.xlabel("Уровень шума σ", fontsize=16)
-    plt.ylabel("Невязка", fontsize=16)
+    plt.ylabel("J", fontsize=16)
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
     plt.legend(frameon=False, fontsize=13)
     plt.tight_layout()
     plt.savefig(f"{output_dir}/boxplot_graph.png", dpi=300, format="png", bbox_inches='tight')
+    plt.savefig(f"{output_dir}/boxplot_graph.pdf", bbox_inches='tight')
     plt.close()
 
 
@@ -116,38 +125,41 @@ def plot_violinplot(df, output_dir, hue, title):
     )
     plt.title(title, fontsize=18)
     plt.xlabel("Уровень шума σ", fontsize=16)
-    plt.ylabel("Невязка", fontsize=16)
+    plt.ylabel("J", fontsize=16)
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
     plt.legend(frameon=False, fontsize=13)
     plt.ylim(0, None)
     plt.tight_layout()
     plt.savefig(f"{output_dir}/violinplot_graph.png", dpi=300, format="png", bbox_inches='tight')
+    plt.savefig(f"{output_dir}/violinplot_graph.pdf", bbox_inches='tight')
     plt.close()
 
 
-def plot_barplot(df, output_dir, title="Сравнение методов оптимизации"):
+def plot_barplot(df, output_dir, title):
     set_plot_style()
+
     df_grouped = df.groupby("Метод оптимизации").agg(
-        mean_metric=("deviation_metric", "mean"),
+        mean_J=("deviation_metric", "mean"),
+        mean_E=("E", "mean"),
         std_metric=("deviation_metric", "std"),
         mean_time=("elapsed_time", "mean"),
         std_time=("elapsed_time", "std")
     ).reset_index()
 
-    df_metric_sorted = df_grouped.sort_values("mean_metric")
+    df_J_sorted = df_grouped.sort_values("mean_J")
     df_time_sorted = df_grouped.sort_values("mean_time")
-
+    df_E_sorted = df_grouped.sort_values("mean_E")
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
     ax1 = axes[0]
     bars1 = ax1.bar(
-        df_metric_sorted["Метод оптимизации"],
-        df_metric_sorted["mean_metric"],
-        color=sns.color_palette("crest", len(df_metric_sorted))
+        df_J_sorted["Метод оптимизации"],
+        df_J_sorted["mean_J"],
+        color=sns.color_palette("crest", len(df_J_sorted))
     )
-    ax1.set_title("Среднее значение невязки")
-    ax1.set_ylabel("Невязка")
+    ax1.set_title("Среднее J")
+    ax1.set_ylabel("J (%)")
     ax1.tick_params(axis='x', rotation=30)
 
     y_max_1 = max([bar.get_height() for bar in bars1])
@@ -155,7 +167,7 @@ def plot_barplot(df, output_dir, title="Сравнение методов опт
 
     for bar in bars1:
         height = bar.get_height()
-        ax1.text(bar.get_x() + bar.get_width()/2, height + y_max_1 * 0.02,
+        ax1.text(bar.get_x() + bar.get_width() / 2, height + y_max_1 * 0.02,
                  f"{height:.3f}", ha='center', va='bottom', fontsize=10)
 
     ax2 = axes[1]
@@ -173,14 +185,64 @@ def plot_barplot(df, output_dir, title="Сравнение методов опт
 
     for bar in bars2:
         height = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width()/2, height + y_max_2 * 0.02,
+        ax2.text(bar.get_x() + bar.get_width() / 2, height + y_max_2 * 0.02,
                  f"{height:.3f}", ha='center', va='bottom', fontsize=10)
 
     plt.suptitle(title, fontsize=18, weight='bold')
     plt.tight_layout(rect=[0, 0, 1, 0.94])
     plt.savefig(f"{output_dir}/barplot_graph.png", dpi=300, format="png", bbox_inches='tight')
+    plt.savefig(f"{output_dir}/barplot_graph.pdf", bbox_inches='tight')
     plt.close()
 
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    bars = ax.bar(
+        df_J_sorted["Метод оптимизации"],
+        df_J_sorted["mean_J"],
+        color=sns.color_palette("crest", len(df_J_sorted))
+    )
+    ax.set_title("Среднее J")
+    ax.set_ylabel("J (%)")
+    ax.tick_params(axis='x', rotation=30)
+
+    y_max = max([bar.get_height() for bar in bars])
+    ax.set_ylim(0, y_max * 1.15)
+
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, height + y_max * 0.02,
+                f"{height:.3f}", ha='center', va='bottom', fontsize=10)
+
+    plt.suptitle(title, fontsize=18, weight='bold')
+    plt.tight_layout(rect=[0, 0, 1, 0.94])
+    plt.savefig(f"{output_dir}/barplot_metric_graph.png", dpi=300, format="png", bbox_inches='tight')
+    plt.savefig(f"{output_dir}/barplot_metric_graph.pdf", bbox_inches='tight')
+    plt.close()
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    bars = ax.bar(
+        df_E_sorted["Метод оптимизации"],
+        df_E_sorted["mean_E"],
+        color=sns.color_palette("crest", len(df_E_sorted))
+    )
+    ax.set_title("Среднее E")
+    ax.set_ylabel("E")
+    ax.tick_params(axis='x', rotation=30)
+
+    y_max = max([bar.get_height() for bar in bars])
+    ax.set_ylim(0, y_max * 1.15)
+
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, height + y_max * 0.02,
+                f"{height:.3f}", ha='center', va='bottom', fontsize=10)
+
+    plt.suptitle(title, fontsize=18, weight='bold')
+    plt.tight_layout(rect=[0, 0, 1, 0.94])
+    plt.savefig(f"{output_dir}/barplot_E_graph.png", dpi=300, format="png", bbox_inches='tight')
+    plt.savefig(f"{output_dir}/barplot_E_graph.pdf", bbox_inches='tight')
+    plt.close()
 
 
 def plot_applicability_heatmap(df, output_path):
@@ -211,7 +273,7 @@ def plot_applicability_heatmap(df, output_path):
     )
 
     cbar = fig.colorbar(c, ax=ax)
-    cbar.set_label("Невязка", fontsize=14)
+    cbar.set_label("J", fontsize=14)
 
     ax.set_title("Карта применимости модели")
     ax.set_xlabel("Pe")
@@ -224,5 +286,6 @@ def plot_applicability_heatmap(df, output_path):
     ax.tick_params(labelsize=10)
 
     plt.tight_layout()
+    plt.savefig(output_path.replace(".png", ".pdf"), dpi=300)
     plt.savefig(output_path, dpi=300)
     plt.close()

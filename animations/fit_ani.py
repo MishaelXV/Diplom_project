@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-from main_algorithm.constants import COMMON_CONSTANTS
+from animations.constants import COMMON_CONSTANTS
 from main_block.main_functions import main_func
 from optimizator.optimizer import compute_leakage_profile
 
@@ -50,7 +50,7 @@ def run_ani(x_data, y_data_noize, df_history, found_left, found_right):
     fig.text(0.91, 0.37, 'Температурный профиль', va='center', ha='left',
              rotation=-90, fontsize=16, fontweight='bold', color='black')
 
-    fig.suptitle('Оптимизации профилей', fontsize=18, fontweight='bold', y=0.95)
+    fig.suptitle('Оптимизация профилей', fontsize=18, fontweight='bold', y=0.95)
 
     def init():
         leak_line.set_data([], [])

@@ -172,35 +172,7 @@ def create_animation_container():
         },
         children=[
             dcc.Graph(id='animation-graph'),
-            create_fullscreen_button(),
         ]
-    )
-
-
-def create_fullscreen_button():
-    return html.Button(
-        '⛶',
-        id='fullscreen-button',
-        n_clicks=0,
-        style={
-            'position': 'absolute',
-            'top': '980px',
-            'right': '155px',
-            'zIndex': 1100,
-            'border-radius': '50%',
-            'width': '40px',
-            'height': '40px',
-            'border': '1px solid #ccc',
-            'background-color': 'white',
-            'cursor': 'pointer',
-            'text-align': 'center',
-            'line-height': '50px',
-            'font-size': '24px',
-            'color': '#007BFF',
-            'display': 'flex',
-            'align-items': 'center',
-            'justify-content': 'center'
-        }
     )
 
 
@@ -256,20 +228,6 @@ def create_parameters_graph():
                     dcc.Graph(id='residual-graph'),
                 ]
             ),
-            html.Div(id='error-container',
-                     style={
-                         'display': 'flex',
-                         'marginLeft': '15px',
-                         'marginTop': '15px',
-                         'backgroundColor': '#ffffff',
-                         'border': '1px solid #cccccc',
-                         'padding': '15px',
-                         'flexDirection': 'column',
-                         'alignItems': 'center',
-                         'width': '100%'
-                     },
-                     children=[html.Div(id ='error-text')]
-                     ),
         ]
     )
 

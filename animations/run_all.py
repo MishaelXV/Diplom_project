@@ -1,13 +1,15 @@
+import os
+from matplotlib.animation import PillowWriter
 from main_block.data import generate_data, noize_data
-from main_algorithm.fit_ani import run_ani
-from main_algorithm.fit_plot import plot_comparison
-from main_algorithm.optimization_path_ani import plot_optimization_path
-from main_algorithm.params_ani import plot_animated_Pe
-from main_algorithm.residual_ani import plot_animated_residuals
+from animations.fit_ani import run_ani
+from animations.fit_plot import plot_comparison
+from animations.optimization_path_ani import plot_optimization_path
+from animations.params_ani import plot_animated_Pe
+from animations.residual_ani import plot_animated_residuals
 from optimizator.optimizer import run_optimization
 from regression.find_intervals import get_boundaries
 from regression.global_models import model_ws, model_ms
-from main_algorithm.constants import COMMON_CONSTANTS
+from animations.constants import COMMON_CONSTANTS
 
 boundary_dict = COMMON_CONSTANTS['boundaries']
 Pe = COMMON_CONSTANTS['Pe']
@@ -23,20 +25,20 @@ def main():
 
     found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, N, sigma, A, model_ws, model_ms)
 
-    result, df_history = run_optimization(x_data, y_data, found_left, found_right,
+    Pe_opt, df_history = run_optimization(x_data, y_data, found_left, found_right,
                                           boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
 
-    final_plot = plot_comparison(x_data, y_data_noize, result.params, found_left, found_right)
+    plot_comparison(x_data, y_data_noize, Pe_opt, found_left, found_right)
     fit_ani = run_ani(x_data, y_data_noize, df_history, found_left, found_right)
     residual_ani = plot_animated_residuals(df_history)
     Pe_ani = plot_animated_Pe(df_history)
     optimization_path_ani = plot_optimization_path(df_history, found_left, found_right, x_data)
 
-    # os.makedirs('animations', exist_ok=True)
-    # anim.save('animations/fit_animation.gif', writer=PillowWriter(fps=5))
-    # ani_residuals.save('animations/residuals_animation.gif', writer=PillowWriter(fps=5))
-    # ani_pe.save('animations/pe_animation.gif', writer=PillowWriter(fps=5))
-    # ani_optimization_path.save('animations/optimization_path.gif', writer=PillowWriter(fps=5))
+    os.makedirs('charts', exist_ok=True)
+    fit_ani.save('charts/fit_animation.gif', writer=PillowWriter(fps=5))
+    residual_ani.save('charts/residuals_animation.gif', writer=PillowWriter(fps=5))
+    Pe_ani.save('charts/pe_animation.gif', writer=PillowWriter(fps=5))
+    optimization_path_ani.save('charts/optimization_path.gif', writer=PillowWriter(fps=5))
 
 
 if __name__ == "__main__":

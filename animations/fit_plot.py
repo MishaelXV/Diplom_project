@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-from main_block.main_functions import main_func, reconstruct_Pe_list
-from main_algorithm.constants import COMMON_CONSTANTS
+from main_block.main_functions import main_func
+from animations.constants import COMMON_CONSTANTS
 from optimizator.optimizer import compute_leakage_profile
 
 TG0 = COMMON_CONSTANTS['TG0']
@@ -20,8 +20,7 @@ plt.rcParams.update({
     "ytick.labelsize": 12,
 })
 
-def plot_comparison(x_data, y_data_noize, params, found_left, found_right):
-    Pe_opt = reconstruct_Pe_list(params, COMMON_CONSTANTS['Pe'][0])
+def plot_comparison(x_data, y_data_noize, Pe_opt, found_left, found_right):
     y_temp = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
 
     fig, (ax_leak, ax_temp) = plt.subplots(2, 1, figsize=(10, 8), sharex=True,

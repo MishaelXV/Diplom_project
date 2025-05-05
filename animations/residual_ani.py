@@ -23,15 +23,15 @@ def plot_animated_residuals(df_history):
     ax.set_ylim(y_min, y_max)
     ax.set_yscale('log')
 
-    ax.set_title('Изменение невязки по итерациям')
+    ax.set_title('Изменение J по итерациям')
     ax.set_xlabel('Номер итерации')
-    ax.set_ylabel('Значение невязки')
+    ax.set_ylabel('J')
 
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     ax.grid(True, linestyle='--', alpha=0.6)
 
-    line, = ax.plot([], [], 'b-', linewidth=2, label='Невязка')
+    line, = ax.plot([], [], 'b-', linewidth=2, label='J')
 
     text = ax.text(0.02, 0.95, '', transform=ax.transAxes, fontsize=11,
                    bbox=dict(facecolor='white', alpha=0.8))

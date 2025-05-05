@@ -32,24 +32,17 @@ def create_parameters(boundary, known_pe1):
     return params
 
 
-def calculate_deviation_metric(params, z, found_left, found_right, true_left, true_right, Pe_true):
-    if len(found_left) <= 2:
-        Pe_opt = [Pe_true[0], 0]
-    else:
-        Pe_opt = reconstruct_Pe_list(params, Pe_true[0])
-
+def calculate_deviation_metric(z, found_left, found_right, true_left, true_right, Pe_true, Pe_opt):
     step_opt = compute_leakage_profile(z, found_left, found_right, Pe_opt)
     step_true = compute_leakage_profile(z, true_left, true_right, Pe_true)
 
-    squared_diff = np.abs(step_opt - step_true)
+    diff_abs = np.abs(step_opt - step_true)
+    true_abs = np.abs(step_true)
+    l1_diff = simpson(diff_abs, x=z)
+    l1_true = simpson(true_abs, x=z)
+    relative_l1_error_percent = (l1_diff / l1_true) * 100
 
-    area = simpson(squared_diff)
-
-    L = max(z) - min(z)
-
-    metric = np.sqrt(area / L)
-
-    return metric
+    return relative_l1_error_percent
 
 
 def optimization_residuals(params, x, y, TG0, atg, A, Pe, left_boundaries, right_boundaries):
@@ -68,13 +61,16 @@ def compute_leakage_profile(z, left_boundary, right_boundary, Pe_list):
 
 def optimization_callback(params, iter, resid, param_history, z, found_left, found_right, true_left, true_right, Pe_true):
     param_values = {param.name: float(param.value) for param in params.values() if param.vary or 'delta' in param.name}
-    deviation_metric = calculate_deviation_metric(params, z, found_left, found_right, true_left, true_right, Pe_true)
     Pe_current = reconstruct_Pe_list(params, Pe_true[0])
+    deviation_metric = calculate_deviation_metric(z, found_left, found_right, true_left, true_right, Pe_true, Pe_current)
+
     param_values['Pe'] = Pe_current
+    param_values['residuals'] = float(np.sum(resid**2))
+
     param_history.append((param_values, deviation_metric, iter))
 
 
-def run_optimization(x_data, y_data, found_left, found_right, true_left, true_right, Pe, TG0, atg, A):
+def run_optimization(x_data, y_data, found_left, found_right, true_left, true_right, Pe, TG0, atg, A, method = 'leastsq'):
     known_pe1 = Pe[0]
     params = create_parameters(found_left, known_pe1)
     param_history = []
@@ -83,11 +79,12 @@ def run_optimization(x_data, y_data, found_left, found_right, true_left, true_ri
         lambda params, x, y: optimization_residuals(params, x, y, TG0, atg, A, Pe, found_left, found_right),
         params,
         args=(x_data, y_data),
-        method='leastsq',
+        method=method,
         iter_cb=lambda params, iter, resid, *args, **kwargs: optimization_callback(
             params, iter, resid, param_history, x_data, found_left, found_right, true_left, true_right, Pe),
         nan_policy='omit',
     )
+    Pe_opt = reconstruct_Pe_list(result.params, Pe[0])
 
     df_history = process_results(param_history)
-    return result, df_history
+    return Pe_opt, df_history

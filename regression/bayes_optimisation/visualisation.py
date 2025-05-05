@@ -19,7 +19,7 @@ plt.rcParams.update({
 def objective_function(x):
     return (x - 2)**2 + np.sin(5 * x) * 0.5
 
-def expected_improvement(X, X_sample, Y_sample, gpr, xi=0.01):
+def expected_improvement(X, Y_sample, gpr, xi=0.01):
     mu, sigma = gpr.predict(X, return_std=True)
     mu_sample_opt = np.min(Y_sample)
 
@@ -58,15 +58,15 @@ def update(frame):
     gpr.fit(X_sample, Y_sample)
     mu, std = gpr.predict(X, return_std=True)
 
-    ei = expected_improvement(X, X_sample, Y_sample, gpr)
+    ei = expected_improvement(X, Y_sample, gpr)
     X_next = X[np.argmax(ei)].reshape(1, -1)
     Y_next = objective_function(X_next)
 
     X_sample = np.vstack((X_sample, X_next))
     Y_sample = np.vstack((Y_sample, Y_next))
 
-    ax.plot(X, objective_function(X), 'y--', label='Целевая функция')
-    ax.plot(X, mu, 'b-', label='Предсказание GPR')
+    ax.plot(X, objective_function(X), 'y--', label='MAE')
+    ax.plot(X, mu, 'b-', label='Предсказание алгоритма')
     ax.fill_between(X.ravel(), mu - 1.96 * std, mu + 1.96 * std, alpha=0.3, label='Доверительный интервал')
     ax.scatter(X_sample[:-1], Y_sample[:-1], color='black', label='Прошлые точки', s=50)
     ax.scatter(X_sample[-1], Y_sample[-1], color='red', label='Новая точка', s=100, edgecolor='k')
@@ -74,12 +74,13 @@ def update(frame):
     ax.set_xlim(bounds[0, 0], bounds[0, 1])
     ax.set_ylim(-1, 6)
     ax.set_xlabel('min_slope')
-    ax.set_ylabel('window_size')
+    ax.set_ylabel('MAE')
     ax.set_title('Байесовская оптимизация')
 
     ax.legend(title=f'Итерация: {frame + 1}', frameon=False)
 
-ani = FuncAnimation(fig, update, frames=35, repeat=True)
+ani = FuncAnimation(fig, update, frames=50, interval=300, repeat=True)
 
 plt.tight_layout()
 plt.show()
+# ani.save('bayes_animation.gif', writer='pillow', fps=5)

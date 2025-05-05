@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 from main_block.data import generate_data, noize_data
 from main_block.main_functions import main_func
-from optimizator.optimizer import run_optimization, compute_leakage_profile, calculate_deviation_metric, \
-    reconstruct_Pe_list
+from optimizator.optimizer import run_optimization, compute_leakage_profile, calculate_deviation_metric
 from regression.find_intervals import get_boundaries
 from regression.global_models import model_ws, model_ms
 
@@ -19,11 +18,12 @@ plt.rcParams.update({
 })
 
 # Константы
-boundary_dict = {"left": [0, 150, 300, 450], "right": [100, 250, 400, 550]}
-Pe = [2000, 1000, 500, 0]
+boundary_dict = {"left": [0, 150, 300, 400],
+                 "right": [100, 250, 350, 470]}
+Pe = [5000, 2000, 1000, 0]
 atg = 0.0001
 TG0 = 1
-A = 1
+A = 5
 sigma = 0.001
 N = 500
 
@@ -67,25 +67,20 @@ def main():
 
     found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, N, sigma, A, model_ws, model_ms)
 
-    if len(found_left) <= 2:
+    if len(found_left) == 1:
+        Pe_opt = [0]
+
+    elif len(found_left) == 2:
         Pe_opt = [Pe[0], 0]
-        y_temp = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
 
-        metric = calculate_deviation_metric(Pe, x_data, found_left, found_right,
-                                            boundary_dict['left'], boundary_dict['right'], Pe)
     else:
-        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
-                                              boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
+        Pe_opt, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+                                              boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, method = 'nelder')
 
-        Pe_opt = reconstruct_Pe_list(result.params, Pe[0])
-        y_temp = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
+    y_temp = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
 
-        metric = calculate_deviation_metric(result.params, x_data, found_left, found_right,
-                                            boundary_dict['left'], boundary_dict['right'], Pe)
-        print(df_history)
-
-    print(metric)
-
+    metric = calculate_deviation_metric(x_data, found_left, found_right,
+                                        boundary_dict['left'], boundary_dict['right'], Pe, Pe_opt)
     plot_results(
         x_data, y_temp, y_data_noize,
         found_left, found_right,
@@ -93,6 +88,9 @@ def main():
         output_path_png='Профиль утечки.png',
         output_path_pdf='Профиль утечки.pdf'
     )
+
+    print(df_history)
+    print(metric)
 
 
 if __name__ == "__main__":

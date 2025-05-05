@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.integrate import simpson
 from optimizator.optimizer import compute_leakage_profile
-from main_algorithm.constants import COMMON_CONSTANTS
+from animations.constants import COMMON_CONSTANTS
 
 TG0 = COMMON_CONSTANTS['TG0']
 atg = COMMON_CONSTANTS['atg']

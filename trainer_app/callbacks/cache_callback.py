@@ -29,24 +29,16 @@ def register_cache_callback(app):
         y_data_noize = noize_data(y_data, sigma)
 
         found_left, found_right = get_boundaries(x_data, y_data_noize, b_values, N, sigma, A, model_ws, model_ms)
-        result, df_history = run_optimization(x_data, y_data_noize, found_left, found_right, left_true,
-                                              right_true, b_values, TG0, atg, A)
+        Pe_opt, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
+                                              boundary_data['left'], boundary_data['right'], b_values, TG0, atg, A)
         boundaries_cache = {
             'left': found_left,
             'right': found_right,
             'left_true': left_true,
             'right_true': right_true,
             'x_data_true': x_data,
-            'y_data_true': y_data,
+            'y_data_true': y_data_noize,
         }
-
-        serializable_param_history = [
-            {
-                'params': dict(params),
-                'residual': float(residual)
-            }
-            for params, residual in param_history
-        ]
 
         df_history_dict = {
             'columns': df_history.columns.tolist(),
@@ -54,16 +46,15 @@ def register_cache_callback(app):
         }
 
         optimization_cache = {
-            'params': {k: v.value for k, v in result.params.items()},
+            'found_Pe': Pe_opt,
             'true_Pe': b_values,
-            'success': bool(result.success),
-            'message': str(result.message),
-            'param_history': serializable_param_history,
             'df_history': df_history_dict,
             'x_data': x_data.tolist(),
             'y_data': y_data.tolist(),
-            'chisqr': float(result.chisqr) if hasattr(result, 'chisqr') else None,
-            'redchi': float(result.redchi) if hasattr(result, 'redchi') else None
+            'fixed_pe': {
+                'first': b_values[0],
+                'last': b_values[-1]
+            }
         }
 
         return optimization_cache, boundaries_cache

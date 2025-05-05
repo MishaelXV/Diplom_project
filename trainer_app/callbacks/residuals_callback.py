@@ -28,10 +28,9 @@ def register_residuals_callback(app):
             right_boundary = boundaries_data['right']
             x_data = np.array(optimization_data['x_data'])
             y_data = np.array(optimization_data['y_data'])
+            Pe_opt = optimization_data['found_Pe']
 
-            params = optimization_data['params']
-
-            traces = create_residuals_traces(params, x_data, y_data, TG0, atg, A, b_values, left_boundary, right_boundary)
+            traces = create_residuals_traces(Pe_opt, x_data, y_data, TG0, atg, A, left_boundary, right_boundary)
 
             fig = go.Figure()
             for trace in traces:
@@ -45,25 +44,40 @@ def register_residuals_callback(app):
                     label="Все параметры",
                     method="update",
                     args=[{"visible": visible_all},
-                          {"title": "Все параметры"}],
+                          {"title": "E от всех параметров"}],
                 )
                 buttons.append(button_all)
 
             fig.update_layout(
                 height=300,
                 width=1000,
-                title_text='Невязка от параметров',
+                title_text='E от параметров',
                 title_x=0.5,
-                xaxis=dict(title="Значение параметра",
-                           showline=True,
-                           linecolor='black',
-                           gridcolor='lightgray',
-                           mirror=True),
-                yaxis=dict(title="Невязка",
-                           showline=True,
-                           linecolor='black',
-                           gridcolor='lightgray',
-                           mirror=True),
+                font=dict(
+                    family="Times New Roman",  #
+                    size=14,
+                    color="black"
+                ),
+                xaxis=dict(
+                    title='Значение параметра',
+                    showline=True,
+                    linecolor='black',
+                    mirror=True,
+                    showgrid=True,
+                    gridcolor='rgba(0,0,0,0.1)',
+                    griddash='dot',
+                    gridwidth=0.5
+                ),
+                yaxis=dict(
+                    title='J',
+                    showline=True,
+                    linecolor='black',
+                    mirror=True,
+                    showgrid=True,
+                    gridcolor='rgba(0,0,0,0.1)',
+                    griddash='dot',
+                    gridwidth=0.5
+                ),
                 plot_bgcolor='white',
                 margin=dict(l=20, r=20, t=40, b=20),
                 updatemenus=[

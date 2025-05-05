@@ -42,8 +42,8 @@ def evaluate_pipeline(regression_window_size, min_slope, Pe, A, N, boundary_dict
 
 
 def objective(trial, Pe, A, sigma, N, boundary_dict, n_repeats=5):
-    window_size = trial.suggest_int("window_size", 1, 21)
-    min_slope = trial.suggest_float("min_slope", 0.01, 1.2)
+    window_size = trial.suggest_int("window_size", 1, 21) # размер окна
+    min_slope = trial.suggest_float("min_slope", 0.01, 1.2) # минимальный угол наклона
 
     errors = []
     for _ in range(n_repeats):

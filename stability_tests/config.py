@@ -4,9 +4,9 @@ STABILITY_CONFIGS = {
     "stability_std_N_samples": {
         "output_dir": "data/charts/stability_std_N_samples",
         "variables": {
-            "sigma_values": np.linspace(0.001, 0.05, 100),
+            "sigma_values": np.linspace(0.001, 0.01, 100),
             "N_samples": [200, 300, 500],
-            "N_rnd": 500
+            "N_rnd": 100
         },
         "plots": ["std_deviation", "mean_difference", "histograms"]
     },
@@ -14,9 +14,9 @@ STABILITY_CONFIGS = {
         "output_dir": "data/charts/stability_optimaizers",
         "variables": {
             "sigma_values": [0.001],
-            "methods": ['slsqp', 'cobyla', 'leastsq', 'least_squares', 'bfgs', 'nelder', 'lbfgsb', 'powell'],
+            "methods": ['cobyla', 'leastsq', 'nelder', 'powell', 'bayes', 'differential_evolution'],
             "N_samples": 500,
-            "N_rnd": 1000
+            "N_rnd": 1
         },
         "plots": ["barplot"]
     },
@@ -25,7 +25,7 @@ STABILITY_CONFIGS = {
         "variables": {
             "sigma_values": [0.001, 0.005, 0.01],
             "N_samples": [200, 300, 500],
-            "N_rnd": 1000
+            "N_rnd": 10
         },
         "plots": ["boxplot", "violinplot"]
     },
@@ -35,7 +35,7 @@ STABILITY_CONFIGS = {
             "sigma_values": [0.001, 0.005, 0.01],
             "A_values": [10, 5, 1],
             "N_samples": 500,
-            "N_rnd": 100
+            "N_rnd": 1
         },
         "plots": ["boxplot", "violinplot"]
     },
@@ -46,7 +46,7 @@ STABILITY_CONFIGS = {
             "A_values": np.linspace(1, 10, 10),
             "sigma": 0.001,
             "N_samples": 300,
-            "N_rnd": 500
+            "N_rnd": 1
         },
         "plots": True
     }
@@ -62,6 +62,9 @@ COMMON_CONSTANTS = {
 }
 
 ENABLED_TESTS = [
-"stability_std_N_samples",
-"stability_applicability_map",
+# "stability_std_N_samples",
+# "stability_applicability_map",
+#     "stability_A",
+#     "stability_optimaizers",
+"stability_N_samples"
 ]

@@ -118,7 +118,6 @@ def remove_short_intervals(start_indices, end_indices, z_norm, min_length=0.01):
 def get_boundaries(x_data, y_data_noize, Pe, N, sigma, A, model_ws=None, model_ms=None,
                    fixed_ws=None, fixed_ms=None):
     z_norm, T_noisy_norm = data_norm(x_data, y_data_noize)
-
     T_smooth = smooth_data(T_noisy_norm)
     filtered_intervals = find_growth_intervals(
         T_smooth, z_norm, sigma,
@@ -134,24 +133,36 @@ def get_boundaries(x_data, y_data_noize, Pe, N, sigma, A, model_ws=None, model_m
 
 
 def plot_data(z_norm, T_smooth, start_indices, end_indices):
+    plt.rcParams.update({
+        "font.family": "serif",
+        "font.serif": ["Times New Roman"],
+        "font.size": 14,
+        "axes.labelsize": 16,
+        "axes.titlesize": 18,
+        "legend.fontsize": 13,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12})
+
     plt.figure(figsize=(10, 5))
     plt.plot(z_norm, T_smooth, label="Сглаженная кривая", linewidth=2, color='red')
 
     for start, end in zip(start_indices, end_indices):
-        plt.axvspan(z_norm[start], z_norm[end], color='green', alpha=0.2)
+        plt.axvspan(z_norm[start], z_norm[end], color='green', alpha=0.15)
 
     plt.xlabel("z/rw")
-    plt.ylabel("T")
+    plt.ylabel("θ")
     plt.title("Интервалы роста")
+    plt.grid(True, linestyle='--', linewidth=0.5)
     plt.legend()
     plt.show()
 
 
 # тестовый пример
 def main():
-    boundary_dict = {'left': [0, 150, 300, 400], 'right': [100, 250, 350, 600]}
-    Pe = [16000, 10000, 5000, 0]
-    N = 1000
+    boundary_dict = {'left': [0, 150, 300, 450],
+                     'right': [100, 250, 350, 520]}
+    Pe = [20000, 10000, 5000, 0]
+    N = 300
     sigma = 0.001
     TG0 = 1
     atg = 0.0001

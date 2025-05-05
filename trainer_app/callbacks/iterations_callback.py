@@ -23,19 +23,11 @@ def register_iterations_callback(app):
 
             df_history = prepare_dataframe_2(df_history)
 
-            num_pe_params = len(boundaries_data['right']) - 1
+            num_pe_params = len(optimization_data['found_Pe']) - 2
 
             fig = create_iterations_traces(df_history, num_pe_params)
 
             buttons = create_update_buttons(num_pe_params)
-
-            if num_pe_params > 1:
-                buttons.append(dict(
-                    label="Все параметры",
-                    method="update",
-                    args=[{"visible": [True] * num_pe_params + [False]},
-                          {"title": "Все параметры"}]
-                ))
 
             fig.update_layout(
                 height=300,
@@ -44,18 +36,40 @@ def register_iterations_callback(app):
                 title_x=0.5,
                 xaxis_title="Итерации",
                 yaxis_title="Значения",
+                font=dict(
+                    family="Times New Roman",
+                    size=14,
+                    color="black"
+                ),
                 xaxis=dict(
                     showline=True,
                     linecolor='black',
-                    gridcolor='lightgray',
-                    mirror=True
+                    mirror=True,
+                    showgrid=True,
+                    gridcolor='rgba(0,0,0,0.1)',
+                    griddash='dot',
+                    gridwidth=0.5
                 ),
                 yaxis=dict(
                     showline=True,
                     linecolor='black',
-                    gridcolor='lightgray',
-                    mirror=True
+                    mirror=True,
+                    showgrid=True,
+                    gridcolor='rgba(0,0,0,0.1)',
+                    griddash='dot',
+                    gridwidth=0.5
                 ),
+                legend=dict(
+                    x=1,
+                    y=1,
+                    xanchor='right',
+                    yanchor='top',
+                    bgcolor='rgba(255,255,255,0.8)',
+                    bordercolor='black',
+                    borderwidth=1,
+                    font=dict(size=12)
+                ),
+                showlegend=True,
                 plot_bgcolor='white',
                 margin=dict(l=20, r=20, t=40, b=20),
                 updatemenus=[
