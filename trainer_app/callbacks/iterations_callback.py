@@ -29,53 +29,66 @@ def register_iterations_callback(app):
 
             buttons = create_update_buttons(num_pe_params)
 
+            colors = {
+                'noisy': '#E63946',
+                'true': '#A8DADC',
+                'geo': '#457B9D',
+                'border': '#2A2A2A',
+                'text': '#F1FAEE',
+                'grid': '#1A1A1A'
+            }
+
             fig.update_layout(
                 height=300,
                 width=1000,
                 title_text='График параметров',
                 title_x=0.5,
-                xaxis_title="Итерации",
+                xaxis_title="Итерация",
                 yaxis_title="Значения",
                 font=dict(
-                    family="Times New Roman",
+                    family="Arial, sans-serif",
                     size=14,
-                    color="black"
+                    color="white"
                 ),
                 xaxis=dict(
                     showline=True,
-                    linecolor='black',
-                    mirror=True,
-                    showgrid=True,
-                    gridcolor='rgba(0,0,0,0.1)',
+                    linecolor=colors['border'],
+                    linewidth=1.5,
+                    mirror=False,
+                    gridcolor=colors['grid'],
                     griddash='dot',
-                    gridwidth=0.5
+                    zeroline=False,
+                    tickfont=dict(size=15, color=colors['text'])
                 ),
                 yaxis=dict(
                     showline=True,
-                    linecolor='black',
-                    mirror=True,
-                    showgrid=True,
-                    gridcolor='rgba(0,0,0,0.1)',
+                    linecolor=colors['border'],
+                    linewidth=1.5,
+                    mirror=False,
+                    gridcolor=colors['grid'],
                     griddash='dot',
-                    gridwidth=0.5
+                    zeroline=False,
+                    tickfont=dict(size=15, color=colors['text'])
                 ),
                 legend=dict(
-                    x=1,
-                    y=1,
+                    x=0.98,
+                    y=0.98,
                     xanchor='right',
                     yanchor='top',
-                    bgcolor='rgba(255,255,255,0.8)',
-                    bordercolor='black',
+                    bgcolor='rgba(0, 0, 0, 0.5)',
+                    bordercolor=colors['border'],
                     borderwidth=1,
-                    font=dict(size=12)
+                    font=dict(size=14, color=colors['text']),
+                    orientation='v'
                 ),
                 showlegend=True,
-                plot_bgcolor='white',
+                plot_bgcolor='#000000',
+                paper_bgcolor='#000000',
                 margin=dict(l=20, r=20, t=40, b=20),
                 updatemenus=[
                     dict(
                         active=0,
-                        buttons=buttons
+                        buttons=buttons,
                     )
                 ],
             )

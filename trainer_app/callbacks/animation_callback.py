@@ -73,8 +73,8 @@ def register_animation_callback(app):
             'display': 'block',
             'width': '98.5%',
             'height': '450px',
-            'border': '1px solid #ccc',
+            'border': '1px solid #444444',
             'padding': '10px',
             'boxSizing': 'border-box',
-            'backgroundColor': '#ffffff'
+            'backgroundColor': '#000000'
         }, fig

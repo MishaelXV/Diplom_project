@@ -1,6 +1,5 @@
 from main_block.main_functions import main_func
 
-
 def extract_boundaries(boundary_values):
     left_boundary = boundary_values.get('left', [])
     right_boundary = boundary_values.get('right', [])

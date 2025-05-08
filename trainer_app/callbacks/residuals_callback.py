@@ -6,7 +6,6 @@ from trainer_app.components.graphs import create_residuals_traces, create_update
 
 def register_residuals_callback(app):
     @app.callback(
-        Output('residual-container', 'style'),
         Output('residual-graph', 'figure'),
         [Input('optimization-cache', 'data'),
          Input('boundaries-cache', 'data'),
@@ -18,10 +17,10 @@ def register_residuals_callback(app):
     )
     def update_residual_graph(optimization_data, boundaries_data, A, TG0, atg, b_values):
         if not optimization_data or not boundaries_data:
-            return {'display': 'none'}, dash.no_update
+            return dash.no_update
 
         if len(b_values) == 1:
-            return {'display': 'none'}, dash.no_update
+            return dash.no_update
 
         try:
             left_boundary = boundaries_data['left']
@@ -48,37 +47,48 @@ def register_residuals_callback(app):
                 )
                 buttons.append(button_all)
 
+            colors = {
+                'noisy': '#E63946',
+                'true': '#A8DADC',
+                'geo': '#457B9D',
+                'border': '#2A2A2A',
+                'text': '#F1FAEE',
+                'grid': '#1A1A1A'
+            }
+
             fig.update_layout(
                 height=300,
                 width=1000,
                 title_text='E от параметров',
                 title_x=0.5,
                 font=dict(
-                    family="Times New Roman",  #
+                    family="Arial, sans-serif",
                     size=14,
-                    color="black"
+                    color=colors['text']
                 ),
                 xaxis=dict(
                     title='Значение параметра',
                     showline=True,
-                    linecolor='black',
-                    mirror=True,
-                    showgrid=True,
-                    gridcolor='rgba(0,0,0,0.1)',
+                    linecolor=colors['border'],
+                    linewidth=1.5,
+                    mirror=False,
+                    gridcolor=colors['grid'],
                     griddash='dot',
-                    gridwidth=0.5
+                    zeroline=False,
+                    tickfont=dict(size=15, color=colors['text'])
                 ),
                 yaxis=dict(
                     title='J',
-                    showline=True,
-                    linecolor='black',
-                    mirror=True,
-                    showgrid=True,
-                    gridcolor='rgba(0,0,0,0.1)',
+                    linecolor=colors['border'],
+                    linewidth=1.5,
+                    mirror=False,
+                    gridcolor=colors['grid'],
                     griddash='dot',
-                    gridwidth=0.5
+                    zeroline=False,
+                    tickfont=dict(size=15, color=colors['text'])
                 ),
-                plot_bgcolor='white',
+                plot_bgcolor='#000000',
+                paper_bgcolor='#000000',
                 margin=dict(l=20, r=20, t=40, b=20),
                 updatemenus=[
                     dict(
@@ -88,18 +98,7 @@ def register_residuals_callback(app):
                 ]
             )
 
-            return {
-                'display': 'flex',
-                'marginLeft': '15px',
-                'marginRight': '15px',
-                'marginTop': '15px',
-                'backgroundColor': '#ffffff',
-                'border': '1px solid #cccccc',
-                'padding': '15px',
-                'flexDirection': 'column',
-                'alignItems': 'center',
-                'width': '100%'
-            }, fig
+            return fig
 
         except Exception as e:
-            return {'display': 'none'}, go.Figure(layout=go.Layout(title=f"Ошибка: {e}"))
+            return go.Figure(layout=go.Layout(title=f"Ошибка: {e}"))

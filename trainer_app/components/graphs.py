@@ -6,24 +6,32 @@ from trainer_app.components.support_functions import residuals
 
 def create_figure_direct_task(z_all, T_all, T_all_noisy, left_boundary, right_boundary, TG0, atg, a):
     fig = go.Figure()
+    colors = {
+        'noisy': '#E63946',
+        'true': '#A8DADC',
+        'geo': '#457B9D',
+        'border': '#2A2A2A',
+        'text': '#F1FAEE',
+        'grid': '#1A1A1A'
+    }
 
-    noisy_trace = go.Scatter(
+    fig.add_trace(go.Scatter(
         x=z_all,
         y=T_all_noisy,
         mode='lines',
-        name='Зашумленная температура',
-        line=dict(width=2, color='#1F77B4')
-    )
-    fig.add_trace(noisy_trace)
+        name='Зашумленный профиль',
+        line=dict(width=2.5, color=colors['noisy']),
+        hovertemplate='<b>Глубина</b>: %{x:.1f}<br><b>Температура</b>: %{y:.2f}<extra></extra>'
+    ))
 
-    temperature_trace = go.Scatter(
+    fig.add_trace(go.Scatter(
         x=z_all,
         y=T_all,
         mode='lines',
-        name='Истинная температура',
-        line=dict(width=2, color='#FF7F0E')
-    )
-    fig.add_trace(temperature_trace)
+        name='Заданный профиль',
+        line=dict(width=2.5, color=colors['true']),
+        hovertemplate='<b>Глубина</b>: %{x:.1f}<br><b>Температура</b>: %{y:.2f}<extra></extra>'
+    ))
 
     z_values_ = np.linspace(left_boundary[0], right_boundary[a - 1], 200)
     result_values = geoterma(z_values_, TG0, atg)
@@ -31,65 +39,76 @@ def create_figure_direct_task(z_all, T_all, T_all_noisy, left_boundary, right_bo
         x=z_values_,
         y=result_values,
         mode='lines',
-        name='Геотермический профиль',
-        line=dict(width=2, color='#2CA02C')
+        name='Геотерма',
+        line=dict(width=2.5, color=colors['geo']),
+        hovertemplate='<b>Глубина</b>: %{x:.1f}<br><b>Температура</b>: %{y:.2f}<extra></extra>'
     ))
 
     fig.update_layout(
         font=dict(
-            family="Times New Roman",
-            size=14,
-            color="black"
+            family="Arial, sans-serif",
+            size=16,
+            color=colors['text']
         ),
-
-        xaxis_title=dict(text="z/rw", font=dict(size=28)),
-        yaxis_title=dict(text="θ", font=dict(size=28)),
         xaxis=dict(
+            title=dict(text="Глубина (z/rw)", font=dict(size=18)),
             showline=True,
-            linecolor='black',
-            mirror=True,
-            showgrid=True,
-            gridcolor='rgba(0,0,0,0.1)',
+            linecolor=colors['border'],
+            linewidth=1.5,
+            mirror=False,
+            gridcolor=colors['grid'],
             griddash='dot',
-            gridwidth=0.5
+            zeroline=False,
+            tickfont=dict(size=15, color=colors['text'])
         ),
         yaxis=dict(
+            title=dict(text="Температура (θ)", font=dict(size=18)),
             showline=True,
-            linecolor='black',
-            mirror=True,
-            showgrid=True,
-            gridcolor='rgba(0,0,0,0.1)',
+            linecolor=colors['border'],
+            linewidth=1.5,
+            mirror=False,
+            gridcolor=colors['grid'],
             griddash='dot',
-            gridwidth=0.5
+            zeroline=False,
+            tickfont=dict(size=15, color=colors['text'])
         ),
-
         legend=dict(
             x=0.98,
             y=0.02,
             xanchor='right',
             yanchor='bottom',
-            bgcolor='rgba(255,255,255,0.7)',
-            bordercolor='rgba(0,0,0,0.5)',
+            bgcolor='rgba(0, 0, 0, 0.7)',
+            bordercolor=colors['border'],
             borderwidth=1,
-            font=dict(size=16)
+            font=dict(size=16),
+            orientation='h'
         ),
-
         title=dict(
-            text="Профиль температуры",
-            font=dict(size=28),
+            text="Температурный профиль",
+            font=dict(size=22, family="Arial"),
             x=0.5,
-            xanchor='center'
+            xanchor='center',
+            y=0.95
         ),
-        plot_bgcolor='white',
-        width=1100,
-        height=700,
-        margin=dict(l=100, r=100, t=100, b=100)
+        plot_bgcolor='#000000',
+        paper_bgcolor='#000000',
+        margin=dict(l=80, r=80, t=80, b=80),
+        hoverlabel=dict(
+            font_size=16,
+            font_family="Arial"
+        )
     )
 
     return fig
 
 
-def generate_frames(param_history, x_data, x_data_true, y_data_noize, left_boundary, right_boundary, TG0, atg, A, fixed_first_pe, fixed_last_pe):
+def generate_frames(param_history, x_data, x_data_true, y_data_noize, left_boundary, right_boundary,
+                    TG0, atg, A, fixed_first_pe, fixed_last_pe):
+    colors = {
+        'model': '#00BFFF',
+        'true': '#A8DADC',
+    }
+
     frames = []
     for i, (params_list, _) in enumerate(param_history):
         Pe_values = [fixed_first_pe] + params_list + [fixed_last_pe]
@@ -102,14 +121,14 @@ def generate_frames(param_history, x_data, x_data_true, y_data_noize, left_bound
                     y=y_predicted,
                     mode='lines',
                     name='Модельный профиль',
-                    line=dict(color='blue', width=2)
+                    line=dict(color=colors['model'], width=2)
                 ),
                 go.Scatter(
                     x=x_data_true,
                     y=y_data_noize,
                     mode='lines',
-                    name='Истинная температура',
-                    line=dict(color='green', width=2)
+                    name='Заданный профиль',
+                    line=dict(color=colors['true'], width=2)
                 )
             ],
             name=f'Итерация_{i}'
@@ -118,7 +137,17 @@ def generate_frames(param_history, x_data, x_data_true, y_data_noize, left_bound
     return frames
 
 
-def create_figure_animation(frames, x_data, left_boundary, right_boundary, TG0, atg, A, b_values, x_data_true, y_data_noize):
+def create_figure_animation(frames, x_data, left_boundary, right_boundary,
+                            TG0, atg, A, b_values, x_data_true, y_data_noize):
+    colors = {
+        'model': '#00BFFF',
+        'true': '#A8DADC',
+        'text': '#F1FAEE',
+        'border': '#2A2A2A',
+        'grid': '#1A1A1A',
+        'background': '#000000'
+    }
+
     initial_y_predicted = main_func(x_data, TG0, atg, A, [1 for _ in range(len(b_values))],
                                     left_boundary, right_boundary)
 
@@ -129,54 +158,60 @@ def create_figure_animation(frames, x_data, left_boundary, right_boundary, TG0, 
                 y=initial_y_predicted,
                 mode='lines',
                 name='Модельный профиль',
-                line=dict(color='blue', width=2)
+                line=dict(color=colors['model'], width=2)
             ),
             go.Scatter(
                 x=x_data_true,
                 y=y_data_noize,
                 mode='lines',
-                name='Истинная температура',
-                line=dict(color='green', width=2)
+                name='Заданный профиль',
+                line=dict(color=colors['true'], width=2)
             )
         ],
         layout=go.Layout(
             font=dict(
-                family="Times New Roman",
+                family="Arial",
                 size=16,
-                color="black"
+                color=colors['text']
             ),
-            title=dict(text="Обратная задача", font=dict(size=24), x=0.5, xanchor='center'),
+            title=dict(text="Восстановление температурного профиля", font=dict(size=24), x=0.5, xanchor='center'),
             xaxis_title=dict(text="z/rw", font=dict(size=20)),
             yaxis_title=dict(text="θ", font=dict(size=20)),
             xaxis=dict(
+                title=dict(text="Глубина (z/rw)", font=dict(size=18)),
                 showline=True,
-                linecolor='black',
-                mirror=True,
-                showgrid=True,
-                gridcolor='rgba(0,0,0,0.1)',
+                linecolor=colors['border'],
+                linewidth=1.5,
+                mirror=False,
+                gridcolor=colors['grid'],
                 griddash='dot',
-                gridwidth=0.5
+                zeroline=False,
+                tickfont=dict(size=15, color=colors['text'])
             ),
             yaxis=dict(
+                title=dict(text="Температура (θ)", font=dict(size=18)),
                 showline=True,
-                linecolor='black',
-                mirror=True,
-                showgrid=True,
-                gridcolor='rgba(0,0,0,0.1)',
+                linecolor=colors['border'],
+                linewidth=1.5,
+                mirror=False,
+                gridcolor=colors['grid'],
                 griddash='dot',
-                gridwidth=0.5
+                zeroline=False,
+                tickfont=dict(size=15, color=colors['text'])
             ),
             legend=dict(
-                x=0.989,
-                y=0.055,
+                x=0.98,
+                y=0.02,
                 xanchor='right',
                 yanchor='bottom',
-                bgcolor='rgba(255,255,255,0.7)',
-                bordercolor='rgba(0,0,0,0.5)',
+                bgcolor='rgba(0, 0, 0, 0.7)',
+                bordercolor=colors['border'],
                 borderwidth=1,
-                font=dict(size=16)
+                font=dict(size=16),
+                orientation='h'
             ),
-            plot_bgcolor='white',
+            plot_bgcolor=colors['background'],
+            paper_bgcolor=colors['background'],
             height=400,
             margin=dict(l=60, r=20, t=60, b=100),
             updatemenus=[
@@ -212,14 +247,14 @@ def create_figure_animation(frames, x_data, left_boundary, right_boundary, TG0, 
                         )
                     ],
                     pad=dict(r=10, t=10, b=10),
-                    font=dict(size=14)
+                    font=dict(size=14, color=colors['text'])
                 )
             ],
             sliders=[
                 dict(
                     active=0,
                     currentvalue=dict(
-                        font=dict(size=16),
+                        font=dict(size=16, color=colors['text']),
                         prefix="Итерация: ",
                         visible=True,
                         xanchor="left"
@@ -227,6 +262,12 @@ def create_figure_animation(frames, x_data, left_boundary, right_boundary, TG0, 
                     x=0.06,
                     y=-0.15,
                     len=0.95,
+                    bgcolor=colors['background'],
+                    activebgcolor='white',
+                    bordercolor=colors['border'],
+                    borderwidth=1,
+                    font=dict(color=colors['text']),
+                    tickcolor=colors['text'],
                     steps=[
                         dict(
                             label=i,
@@ -262,7 +303,6 @@ def create_iterations_traces(df_history, num_pe_params):
         )
         fig.add_trace(trace)
 
-    # График Невязки (J)
     nevyazka_trace = go.Scatter(
         x=df_history.index,
         y=df_history["Невязка"],
@@ -303,7 +343,6 @@ def create_update_buttons(num_pe_params):
             ]
         ))
 
-    # Кнопка J (невязка)
     visible = [False] * total_traces
     visible[num_pe_params] = True
     buttons.append(dict(
@@ -318,7 +357,6 @@ def create_update_buttons(num_pe_params):
         ]
     ))
 
-    # Кнопка E (residuals)
     visible = [False] * total_traces
     visible[num_pe_params + 1] = True
     buttons.append(dict(
@@ -333,7 +371,6 @@ def create_update_buttons(num_pe_params):
         ]
     ))
 
-    # Кнопка для всех параметров (Pe)
     visible = [True] * num_pe_params + [False, False]
     buttons.append(dict(
         label="Все параметры",

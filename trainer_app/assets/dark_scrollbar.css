@@ -1,0 +1,108 @@
+/* Стили тёмного скроллбара */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 5px;
+    border: 2px solid #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+/* Убирает белый угол между скроллбарами */
+::-webkit-scrollbar-corner {
+    background-color: #1e1e1e;
+}
+
+/* Стили для числовых полей ввода */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+    background-color: #555;
+    color: white;
+    opacity: 1;
+    padding: 5px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+input[type="number"]::-webkit-inner-spin-button:hover,
+input[type="number"]::-webkit-outer-spin-button:hover {
+    background-color: #777;
+}
+
+/* Для Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Полное отключение hover-эффектов */
+*:hover {
+    transition: none !important;
+}
+
+/* Стили для кнопок Plotly */
+.updatemenu {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.updatemenu-item {
+    background: transparent !important;
+    border: none !important;
+    color: white !important;
+    transition: none !important;
+}
+
+.updatemenu-item:hover {
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.updatemenu-item.active {
+    background: transparent !important;
+}
+
+/* Убираем стрелки и декоративные элементы */
+.updatemenu .symbol {
+    display: none !important;
+}
+
+/* Стили для выпадающих меню */
+.updatemenu .menu {
+    background-color: rgba(0, 0, 0, 0.9) !important;
+    border: 1px solid #333 !important;
+}
+
+.updatemenu .menu .item {
+    color: white !important;
+}
+
+.updatemenu .menu .item:hover {
+    background-color: rgba(50, 50, 50, 0.5) !important;
+}
+
+/* Дополнительное подавление анимаций */
+.updatemenu,
+.updatemenu *,
+.updatemenu *:hover,
+.updatemenu *:active,
+.updatemenu *:focus {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}

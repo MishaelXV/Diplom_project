@@ -23,7 +23,7 @@ def register_table_callback(app):
             if isinstance(prepared_df, pd.DataFrame):
                 return prepared_df.to_dict('records')
             elif isinstance(prepared_df, list):
-                return prepared_df  # Если уже список словарей
+                return prepared_df
             else:
                 raise ValueError("Неподдерживаемый формат данных")
 

@@ -1,7 +1,6 @@
 from dash import dcc, html
 from dash import dash_table
 
-# Начальные значения параметров
 a_initial = 1
 b_values_initial = [2000]
 A_initial = 5
@@ -9,21 +8,45 @@ TG0_initial = 1
 atg_initial = 0.0001
 sigma_initial = 0.001
 zInf = 100000
-N_initial = 50
+N_initial = 250
+
+html.Div(style={
+    'css': [
+        {
+            'selector': 'input[type="number"]::-webkit-inner-spin-button',
+            'rule': '''
+                -webkit-appearance: none;
+                background: #your_color url(data:image/png;base64,...) no-repeat center center;
+                width: 1em;
+                opacity: 1;
+            '''
+        }
+    ]
+})
+
 
 def create_header():
     return html.Div(
         style={
             'width': '100%',
-            'backgroundColor': '#34495e',
-            'color': 'white',
-            'padding': '15px',
+            'backgroundColor': '#1e1e1e',
+            'color': '#DDDDDD',
+            'padding': '15px 20px',
             'textAlign': 'center',
-            'fontSize': '1.8em',
+            'fontSize': '1.7em',
             'fontFamily': 'Arial, sans-serif',
+            'marginBottom': '15px',
         },
         children=[
-            html.H1("Активная термометрия"),
+            html.H1(
+                "Моделирование температурных полей",
+                style={
+                    'margin': '0',
+                    'padding': '5px 0',
+                    'fontSize': '1em',
+                    'letterSpacing': '0.5px'
+                }
+            )
         ]
     )
 
@@ -35,23 +58,23 @@ def create_parameters_input():
             'height': '700px',
             'overflowY': 'scroll',
             'padding': '15px',
-            'backgroundColor': '#ffffff',
+            'backgroundColor': '#1e1e1e',
             'margin': '15px',
             'display': 'flex',
             'flexDirection': 'column',
-            'border': '1px solid #cccccc',
+            'border': '1px solid #1e1e1e',
         },
         children=[
             html.H1(
                 "Параметры",
                 style={
                     'textAlign': 'center',
-                    'color': '#34495e',
+                    'color': '#DDDDDD',
                     'fontSize': '1.5em',
                     'fontFamily': 'Arial, sans-serif',
                     'borderBottom': '1px solid #cccccc',
                     'paddingBottom': '5px',
-                    'backgroundColor': '#ffffff',
+                    'backgroundColor': '#1e1e1e',
                     'padding': '5px',
                     'width': '100%',
                 }
@@ -59,9 +82,16 @@ def create_parameters_input():
             html.Div(
                 style={'marginBottom': '10px'},
                 children=[
-                    html.Label("Количество изолированных участков скважины:", style={'color': '#34495e'}),
+                    html.Label("Количество изолированных участков скважины:", style={'color': '#DDDDDD'}),
                     dcc.Input(id="a-input", type="number", value=a_initial,
-                              style={'width': '100%', 'fontSize': '1em', 'margin': '5px'}),
+                              style={
+                                  'width': '100%',
+                                  'fontSize': '1em',
+                                  'margin': '5px',
+                                  'backgroundColor': '#1e1e1e',
+                                  'color': '#DDDDDD',
+                                  'border': '1px solid #555'
+                              }),
                 ]
             ),
             html.Div(id='dynamic-b-inputs'),
@@ -79,9 +109,11 @@ def create_input_field(label, input_id, value, step=1):
     return html.Div(
         style={'marginBottom': '10px'},
         children=[
-            html.Label(label, style={'color': '#34495e'}),
+            html.Label(label, style={'color': '#DDDDDD'}),
             dcc.Input(id=input_id, type="number", value=value, step=step,
-                      style={'width': '100%', 'fontSize': '1em', 'margin': '5px'}),
+                      style={'width': '100%', 'fontSize': '1em', 'margin': '5px',  'backgroundColor': '#1e1e1e',
+                                  'color': '#DDDDDD',
+                                  'border': '1px solid #555'}),
         ]
     )
 
@@ -90,7 +122,7 @@ def create_debit_calculation_section():
     return html.Div(
         style={'marginBottom': '10px', 'width': '100%'},
         children=[
-            html.Label("Расходы:", style={'color': '#34495e'}),
+            html.Label("Расходы:", style={'color': '#DDDDDD'}),
             html.Div(
                 id="debits-output",
                 style={
@@ -98,9 +130,8 @@ def create_debit_calculation_section():
                     'fontSize': '1em',
                     'margin': '0 auto',
                     'padding': '10px',
-                    'backgroundColor': '#f5f5f5',
-                    'border': '1px solid #cccccc',
-                    'borderRadius': '5px',
+                    'backgroundColor': '#1e1e1e',
+                    'border': '1px solid #555',
                     'textAlign': 'center',
                     'boxSizing': 'border-box',
                 },
@@ -110,12 +141,12 @@ def create_debit_calculation_section():
                 "Вычислить расходы",
                 id="calculate-debits-btn",
                 style={
-                    'backgroundColor': '#34495e',
-                    'color': 'white',
+                    'backgroundColor': '#1e1e1e',
+                    'color': '#DDDDDD',
                     'padding': '10px 20px',
                     'margin': '10px auto',
-                    'border': 'none',
                     'cursor': 'pointer',
+                    'border': '1px solid #555',
                     'display': 'block',
                     'textAlign': 'center',
                 }
@@ -124,11 +155,11 @@ def create_debit_calculation_section():
                 "Решить обратную задачу",
                 id="solve_inverse_task",
                 style={
-                    'backgroundColor': '#34495e',
-                    'color': 'white',
+                    'backgroundColor': '#1e1e1e',
+                    'color': '#DDDDDD',
                     'padding': '10px 20px',
                     'margin': '10px auto',
-                    'border': 'none',
+                    'border': '1px solid #555',
                     'cursor': 'pointer',
                     'display': 'block',
                     'textAlign': 'center',
@@ -140,20 +171,33 @@ def create_debit_calculation_section():
 
 def create_plot_area():
     return html.Div(
+        id="plot-area-container",
         style={
-            'display': 'flex',
+            'display': 'none',
             'width': '65%',
+            'height': '725px',
             'marginLeft': '15px',
             'marginRight': '15px',
             'marginTop': '15px',
-            'backgroundColor': '#ffffff',
-            'border': '1px solid #cccccc',
-            'padding': '15px',
+            'backgroundColor': '#111111',
+            'border': '1px solid #444444',
+            'padding': '0',
             'flexDirection': 'column',
-            'alignItems': 'center',
+            'alignItems': 'stretch',
         },
         children=[
-            dcc.Graph(id='quadratic-graph'),
+            dcc.Graph(
+                id='quadratic-graph',
+                style={
+                    'width': '100%',
+                    'height': '100%',
+                    'display': 'block'
+                },
+                config={
+                    'responsive': True,
+                    'displayModeBar': False,
+                }
+            )
         ]
     )
 
@@ -164,16 +208,28 @@ def create_animation_container():
         style={
             'display': 'none',
             'width': '100%',
-            'height': '400px',
-            'border': '1px solid #ccc',
-            'padding': '10px',
+            'height': '450px',
+            'border': '1px solid #444444',
+            'padding': '0',
             'boxSizing': 'border-box',
-            'backgroundColor': '#ffffff'
+            'backgroundColor': '#111111',
+            'overflow': 'hidden'
         },
         children=[
-            dcc.Graph(id='animation-graph'),
-        ]
-    )
+                dcc.Graph(
+                    id='animation-graph',
+                    style={
+                        'width': '100%',
+                        'height': '100%',
+                        'display': 'block'
+                    },
+                    config={
+                        'responsive': True,
+                        'displayModeBar': False
+                        }
+                    )
+                ]
+            )
 
 
 def create_details_container():
@@ -201,31 +257,38 @@ def create_parameters_graph():
                     'display': 'flex',
                     'marginLeft': '15px',
                     'marginTop': '15px',
-                    'backgroundColor': '#ffffff',
-                    'border': '1px solid #cccccc',
+                    'backgroundColor': '#000000',
+                    'border': '1px solid #444444',
                     'padding': '15px',
                     'flexDirection': 'column',
                     'alignItems': 'center',
                     'width': '100%',
                 },
                 children=[
-                    dcc.Graph(id='parameters-graph'),
+                    dcc.Graph(id='parameters-graph', config={
+                        'responsive': True,
+                        'displayModeBar': False
+                        }),
+
                 ]
             ),
-            html.Div(id='residual-container',
+            html.Div(
                 style={
                     'display': 'flex',
                     'marginLeft': '15px',
                     'marginTop': '15px',
-                    'backgroundColor': '#ffffff',
-                    'border': '1px solid #cccccc',
+                    'backgroundColor': '#000000',
+                    'border': '1px solid #444444',
                     'padding': '15px',
                     'flexDirection': 'column',
                     'alignItems': 'center',
                     'width': '100%'
                 },
                 children=[
-                    dcc.Graph(id='residual-graph'),
+                    dcc.Graph(id='residual-graph', config={
+                        'responsive': True,
+                        'displayModeBar': False
+                        }),
                 ]
             ),
         ]
@@ -256,8 +319,8 @@ def create_data_table():
             'height': '330px',
             'marginLeft': '15px',
             'marginTop': '15px',
-            'backgroundColor': '#ffffff',
-            'border': '1px solid #cccccc',
+            'backgroundColor': '#121212',
+            'border': '1px solid #333333',
             'padding': '0',
             'flexDirection': 'column',
             'overflowY': 'auto',
@@ -276,27 +339,33 @@ def create_data_table():
                     'overflowX': 'auto',
                     'display': 'flex',
                     'flexDirection': 'column',
+                    'backgroundColor': '#121212'
                 },
                 style_cell={
                     'textAlign': 'left',
                     'height': 'auto',
                     'overflowX': 'auto',
-                    'lineHeight': '15px',
+                    'lineHeight': '18px',
                     'whiteSpace': 'normal',
+                    'backgroundColor': '#1e1e1e',
+                    'color': '#f1f1f1',
+                    'border': '1px solid #333333',
+                    'fontFamily': 'Arial, sans-serif',
+                    'fontSize': '14px'
                 },
                 style_header={
-                    'whiteSpace': 'normal',
+                    'backgroundColor': '#2a2a2a',
+                    'color': '#ffffff',
+                    'fontWeight': 'bold',
+                    'fontFamily': 'Consolas, monospace',
+                    'fontSize': '15px',
+                    'border': '1px solid #444444'
                 },
-                page_size=1000,
-                style_data_conditional=[
-                    {
-                        'if': {'row_index': 'odd'},
-                        'backgroundColor': 'rgb(248, 248, 248)'
-                    }
-                ]
+                page_size=1000
             )
         ]
     )
+
 
 def create_histogram_graph():
     return html.Div(
@@ -306,21 +375,19 @@ def create_histogram_graph():
             'height': '330px',
             'marginLeft': '15px',
             'marginTop': '15px',
-            'backgroundColor': '#ffffff',
-            'border': '1px solid #cccccc',
+            'backgroundColor': '#000000',
+            'border': '1px solid #444444',
             'flexDirection': 'column',
             'overflowY': 'auto',
         },
-        children=[
-            dcc.Graph(id='hist-graph', config={'displayModeBar': False}),
-        ]
+        children=[]
     )
 
 
 def create_layout():
     return html.Div(
         style={
-            'backgroundColor': '#f5f5f5',
+            'backgroundColor': '#111111',
             'minHeight': '100vh',
             'display': 'flex',
             'flexDirection': 'column',

@@ -57,7 +57,7 @@ COMMON_CONSTANTS = {
     "TG0": 1,
     "atg": 0.0001,
     "A": 5,
-    "Pe": [5000, 2000, 1000, 0],
+    "Pe": [2000, 1000, 500, 0],
     "boundaries": {"left": [0, 150, 300, 450], "right": [100, 250, 400, 550]}
 }
 
@@ -65,6 +65,6 @@ ENABLED_TESTS = [
 # "stability_std_N_samples",
 # "stability_applicability_map",
 #     "stability_A",
-#     "stability_optimaizers",
-"stability_N_samples"
+"stability_optimaizers",
+# "stability_N_samples"
 ]
