@@ -10,6 +10,7 @@ from callbacks.iterations_callback import register_iterations_callback
 from callbacks.residuals_callback import register_residuals_callback
 from callbacks.realisation_callback import register_realisation_callback
 from callbacks.cache_callback import register_cache_callback
+from callbacks.params_info_callback import register_params_info_callback
 
 app = dash.Dash(__name__)
 
@@ -47,6 +48,22 @@ app.css.append_css({
     'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'
 })
 
+app.css.append_css({
+    'external_url': '''
+        .modal-content {
+            background-color: #1e1e1e !important;
+            color: #DDDDDD !important;
+            border: 1px solid #444 !important;
+        }
+        .modal-header, .modal-footer {
+            border-color: #444 !important;
+        }
+        .close {
+            color: #DDDDDD !important;
+        }
+    '''
+})
+
 register_direct_task_callback(app)
 register_Pe_callback(app)
 register_boundaries_callback(app)
@@ -57,6 +74,7 @@ register_iterations_callback(app)
 register_residuals_callback(app)
 register_realisation_callback(app)
 register_cache_callback(app)
+register_params_info_callback(app)
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8052)
+    app.run(debug=True, port=8052)

@@ -5,7 +5,7 @@ a_initial = 1
 b_values_initial = [2000]
 A_initial = 5
 TG0_initial = 1
-atg_initial = 0.0001
+tg_initial = 0.0001
 sigma_initial = 0.001
 zInf = 100000
 N_initial = 250
@@ -82,7 +82,7 @@ def create_parameters_input():
             html.Div(
                 style={'marginBottom': '10px'},
                 children=[
-                    html.Label("Количество изолированных участков скважины:", style={'color': '#DDDDDD'}),
+                    html.Label("Количество изолированных участков скважины:", id="label-a-input", style={'color': '#DDDDDD'}),
                     dcc.Input(id="a-input", type="number", value=a_initial,
                               style={
                                   'width': '100%',
@@ -92,14 +92,29 @@ def create_parameters_input():
                                   'color': '#DDDDDD',
                                   'border': '1px solid #555'
                               }),
+                    html.Div(id='info-a-input', children='', style={
+                        'display': 'none',
+                        'position': 'absolute',
+                        'left': '100%',
+                        'top': '0',
+                        'width': '250px',
+                        'backgroundColor': '#1e1e1e',
+                        'border': '1px solid #555',
+                        'padding': '10px',
+                        'zIndex': '1000',
+                        'color': '#DDDDDD',
+                        'boxShadow': '0 0 10px rgba(0,0,0,0.5)',
+                        'borderRadius': '5px',
+                        'marginLeft': '10px'
+                    })
                 ]
             ),
             html.Div(id='dynamic-b-inputs'),
-            create_input_field("Параметр A:", "A-input", A_initial),
-            create_input_field("Параметр TG0:", "TG0-input", TG0_initial, step=0.1),
-            create_input_field("Параметр atg:", "atg-input", atg_initial, step=0.0001),
-            create_input_field("Параметр sigma:", "sigma-input", sigma_initial, step=0.0001),
-            create_input_field("Количество замеров:", "N-input", N_initial, step=1),
+            create_input_field("A:", "A-input", A_initial),
+            create_input_field("TG0:", "TG0-input", TG0_initial, step=0.1),
+            create_input_field("tg:", "atg-input", tg_initial, step=0.0001),
+            create_input_field("sigma:", "sigma-input", sigma_initial, step=0.0001),
+            create_input_field("N:", "N-input", N_initial, step=1),
             create_debit_calculation_section(),
         ]
     )
@@ -107,13 +122,53 @@ def create_parameters_input():
 
 def create_input_field(label, input_id, value, step=1):
     return html.Div(
-        style={'marginBottom': '10px'},
+        style={
+            'marginBottom': '10px',
+            'position': 'relative'
+        },
         children=[
-            html.Label(label, style={'color': '#DDDDDD'}),
-            dcc.Input(id=input_id, type="number", value=value, step=step,
-                      style={'width': '100%', 'fontSize': '1em', 'margin': '5px',  'backgroundColor': '#1e1e1e',
-                                  'color': '#DDDDDD',
-                                  'border': '1px solid #555'}),
+            html.Label(
+                label,
+                style={
+                    'color': '#DDDDDD',
+                    'cursor': 'pointer',
+                    'display': 'inline-block'
+                },
+                id=f"label-{input_id}",
+            ),
+            html.Div(
+                id=f"info-{input_id}",
+                children='',
+                style={
+                    'display': 'none',
+                    'position': 'absolute',
+                    'left': '100%',
+                    'top': '0',
+                    'width': '250px',
+                    'backgroundColor': '#1e1e1e',
+                    'border': '1px solid #555',
+                    'padding': '10px',
+                    'zIndex': '1000',
+                    'color': '#DDDDDD',
+                    'boxShadow': '0 0 10px rgba(0,0,0,0.5)',
+                    'borderRadius': '5px',
+                    'marginLeft': '10px'
+                }
+            ),
+            dcc.Input(
+                id=input_id,
+                type="number",
+                value=value,
+                step=step,
+                style={
+                    'width': '100%',
+                    'fontSize': '1em',
+                    'margin': '5px',
+                    'backgroundColor': '#1e1e1e',
+                    'color': '#DDDDDD',
+                    'border': '1px solid #555'
+                }
+            ),
         ]
     )
 
