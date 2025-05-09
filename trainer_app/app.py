@@ -8,13 +8,14 @@ from trainer_app.callbacks.animation.animation_callback import register_animatio
 from callbacks.table_callback import register_table_callback
 from callbacks.iterations_callback import register_iterations_callback
 from callbacks.residuals_callback import register_residuals_callback
-from callbacks.cache_callback import register_cache_callback
+from trainer_app.callbacks.optimizer.cache_callback import register_cache_callback
 from callbacks.params_info_callback import register_params_info_callback
 from trainer_app.callbacks.animation.load_callback import register_load_callback
 from trainer_app.callbacks.details_container_visible_callback import register_details_container_visible_callback
 from trainer_app.callbacks.download_callback import register_download_callback
 from trainer_app.callbacks.loading_callback import register_loading_callback
 from trainer_app.callbacks.metrics_callback import register_metrics_callback
+from trainer_app.callbacks.optimizer.optimizer_callback import register_optimizer_callback
 from trainer_app.callbacks.parallel_graph_callback import register_parallel_graph_callback
 
 app = dash.Dash(__name__)
@@ -85,6 +86,7 @@ register_parallel_graph_callback(app)
 register_download_callback(app)
 register_loading_callback(app)
 register_metrics_callback(app)
+register_optimizer_callback(app)
 
 if __name__ == '__main__':
     app.run(debug=True, port=8052)

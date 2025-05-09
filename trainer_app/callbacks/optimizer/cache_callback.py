@@ -1,5 +1,9 @@
 import dash
-from dash.dependencies import Input, Output
+import time
+import numpy as np
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+from main_block.main_functions import main_func
+from dash.dependencies import Input, Output, State
 from optimizator.optimizer import run_optimization
 from regression.global_models import model_ws, model_ms
 from trainer_app.components.support_functions import extract_boundaries
@@ -10,7 +14,7 @@ def register_cache_callback(app):
     @app.callback(
         Output('optimization-cache', 'data'),
         Output('boundaries-cache', 'data'),
-        Input('solve_inverse_task', 'n_clicks'),
+        Input('run-optimization-btn', 'n_clicks'),
         [Input({'type': 'b-input', 'index': dash.dependencies.ALL}, 'value'),
          Input('boundary-store', 'data'),
          Input('A-input', 'value'),
@@ -18,19 +22,41 @@ def register_cache_callback(app):
          Input('atg-input', 'value'),
          Input('sigma-input', 'value'),
          Input('N-input', 'value')],
+        State('optimizer-method', 'value'),
         prevent_initial_call=True
     )
-    def compute_and_cache(n_clicks, b_values, boundary_data, A, TG0, atg, sigma, N):
+
+    def compute_and_cache(n_clicks, b_values, boundary_data, A, TG0, atg, sigma, N, optimizer_method):
         if not n_clicks:
             raise dash.exceptions.PreventUpdate
+
+        start_time = time.time()
 
         left_true, right_true = extract_boundaries(boundary_data)
         x_data, y_data = generate_data(left_true, right_true, b_values, TG0, atg, A, N)
         y_data_noize = noize_data(y_data, sigma)
 
-        found_left, found_right = get_boundaries(x_data, y_data_noize, b_values, N, sigma, A, model_ws, model_ms)
-        Pe_opt, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
-                                              boundary_data['left'], boundary_data['right'], b_values, TG0, atg, A)
+        found_left, found_right = get_boundaries(
+            x_data, y_data_noize, b_values, N, sigma, A, model_ws, model_ms
+        )
+
+        Pe_opt, df_history = run_optimization(
+            x_data, y_data_noize, found_left, found_right,
+            boundary_data['left'], boundary_data['right'],
+            b_values, TG0, atg, A,  optimizer_method
+        )
+
+        y_pred = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
+
+        mae = mean_absolute_error(y_data_noize, y_pred)
+        mse = mean_squared_error(y_data_noize, y_pred)
+        rmse = np.sqrt(mse)
+        r2 = r2_score(y_data_noize, y_pred)
+        mape = np.mean(np.abs((y_data_noize - y_pred) / y_data_noize)) * 100
+        eps = 1e-8
+        chi2 = np.sum(((y_data_noize - y_pred) ** 2) / (y_pred + eps))
+        duration = time.time() - start_time
+
         boundaries_cache = {
             'left': found_left,
             'right': found_right,
@@ -54,6 +80,16 @@ def register_cache_callback(app):
             'fixed_pe': {
                 'first': b_values[0],
                 'last': b_values[-1]
+            },
+            'metrics': {
+                'Метод оптимизации': optimizer_method,
+                'MAE': mae,
+                'MSE': mse,
+                'RMSE': rmse,
+                'R2': r2,
+                'MAPE': mape,
+                'Chi2': chi2,
+                'Runtime_sec': duration
             }
         }
 

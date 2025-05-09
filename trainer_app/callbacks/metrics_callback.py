@@ -5,13 +5,21 @@ def register_metrics_callback(app):
         Output('optimization-metrics-content', 'children'),
         Input('optimization-cache', 'data'),
     )
-    def update_optimization_metrics(input_value):
-        metrics = {
-            "Целевая функция": 0.123,
-            "Итерации": 150,
-            "Время выполнения": "45.2 сек",
-            "Сходимость": "Достигнута",
-            "Точность": 1e-4,
+    def update_optimization_metrics(opt_cache):
+        if not opt_cache or 'metrics' not in opt_cache:
+            return html.Div("Метрики недоступны")
+
+        metrics = opt_cache['metrics']
+
+        readable_names = {
+            "Метод оптимизации": "Метод оптимизации",
+            "MAE": "Средняя абсолютная ошибка (MAE)",
+            "MSE": "Среднеквадратичная ошибка (MSE)",
+            "RMSE": "Квадратный корень из MSE (RMSE)",
+            "R2": "Коэффициент детерминации (R²)",
+            "MAPE": "Относительная ошибка (MAPE) [%]",
+            "Chi2": "Хи-квадрат (χ²)",
+            "Runtime_sec": "Время выполнения [сек]"
         }
 
         return html.Div(
@@ -19,35 +27,39 @@ def register_metrics_callback(app):
                 'display': 'flex',
                 'flexDirection': 'column',
                 'gap': '8px',
-                'overflowX': 'hidden'
+                'overflowX': 'hidden',
+                'fontFamily': 'Arial, sans-serif',
+                'padding': '10px',
+                'border': '1px solid #444444',
+                'borderRadius': '8px',
+                'backgroundColor': '#000000',
             },
             children=[
                 html.Div(
                     [
                         html.Span(
-                            f"{name}: ",
+                            f"{readable_names.get(key, key)}: ",
                             style={
                                 'fontWeight': 'bold',
                                 'display': 'inline-block',
-                                'minWidth': '120px'
+                                'width': '300px',
+                                'color': 'white'
                             }
                         ),
                         html.Span(
-                            str(value),
+                            f"{value:.5f}" if isinstance(value, (float, int)) else str(value),
                             style={
                                 'display': 'inline-block',
-                                'overflow': 'hidden',
-                                'textOverflow': 'ellipsis',
-                                'whiteSpace': 'nowrap'
+                                'color': 'white',
+                                'fontFamily': 'monospace'
                             }
                         )
                     ],
                     style={
                         'display': 'flex',
                         'alignItems': 'center',
-                        'width': '100%'
                     }
                 )
-                for name, value in metrics.items()
+                for key, value in metrics.items()
             ]
         )

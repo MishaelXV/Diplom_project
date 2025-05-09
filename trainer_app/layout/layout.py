@@ -182,7 +182,7 @@ def create_debit_calculation_section():
                 id="debits-output",
                 style={
                     'width': '100%',
-                    'fontSize': '1em',
+                    'fontSize': '0.8em',
                     'margin': '0 auto',
                     'padding': '10px',
                     'backgroundColor': '#1e1e1e',
@@ -190,48 +190,94 @@ def create_debit_calculation_section():
                     'textAlign': 'center',
                     'boxSizing': 'border-box',
                 },
-                children="Нет данных"
+                children="Нажмите 'Вычислить расходы', чтобы обновить значения"
             ),
             html.Button(
                 "Вычислить расходы",
                 id="calculate-debits-btn",
                 style={
+                    'width': '100%',
                     'backgroundColor': '#1e1e1e',
                     'color': '#DDDDDD',
-                    'padding': '10px 20px',
-                    'margin': '10px auto',
+                    'padding': '12px 20px',
+                    'margin': '10px 0',
                     'cursor': 'pointer',
                     'border': '1px solid #555',
                     'display': 'block',
                     'textAlign': 'center',
+                    'fontSize': '0.8em',
                 }
             ),
             html.Button(
                 "Решить обратную задачу",
-                id="solve_inverse_task",
+                id="open-optimizers",
                 style={
+                    'width': '100%',
                     'backgroundColor': '#1e1e1e',
                     'color': '#DDDDDD',
-                    'padding': '10px 20px',
-                    'margin': '10px auto',
+                    'padding': '12px 20px',
+                    'margin': '10px 0',
                     'border': '1px solid #555',
                     'cursor': 'pointer',
                     'display': 'block',
                     'textAlign': 'center',
+                    'fontSize': '0.8em',
                 }
+            ),
+            html.Div(
+                id='optimizer-method-container',
+                style={'display': 'none', 'marginTop': '10px', 'width': '100%'},
+                children=[
+                    html.Label("Метод оптимизации:", style={'color': '#DDDDDD'}),
+                    dcc.Dropdown(
+                        id='optimizer-method',
+                        options=[
+                            {'label': 'Nelder-Mead', 'value': 'nelder-mead'},
+                            {'label': 'BFGS', 'value': 'bfgs'},
+                            {'label': 'Powell', 'value': 'powell'},
+                            {'label': 'L-BFGS-B', 'value': 'l-bfgs-b'},
+                        ],
+                        value=None,
+                        clearable=False,
+                        style={
+                            'backgroundColor': '#1e1e1e',
+                            'color': '#DDDDDD',
+                            'marginBottom': '10px'
+                        },
+                        className='custom-dropdown'
+                    ),
+                    html.Button(
+                        "Запустить оптимизацию",
+                        id="run-optimization-btn",
+                        style={
+                            'width': '100%',
+                            'backgroundColor': '#1e1e1e',
+                            'color': '#DDDDDD',
+                            'padding': '12px 20px',
+                            'margin': '10px 0',
+                            'border': '1px solid #555',
+                            'cursor': 'pointer',
+                            'display': 'block',
+                            'textAlign': 'center',
+                            'fontSize': '0.8em',
+                        }
+                    )
+                ]
             ),
             html.Button(
                 "Сгенерировать отчёт",
                 id="export_to_pdf",
                 style={
+                    'width': '100%',
                     'backgroundColor': '#1e1e1e',
                     'color': '#DDDDDD',
-                    'padding': '10px 20px',
-                    'margin': '10px auto',
+                    'padding': '12px 20px',
+                    'margin': '10px 0',
                     'border': '1px solid #555',
                     'cursor': 'pointer',
                     'display': 'block',
                     'textAlign': 'center',
+                    'fontSize': '0.8em',
                 }
             ),
         ]
@@ -535,7 +581,7 @@ def create_optimization_metrics():
                     html.Div("Здесь будут отображаться метрики оптимизации", style={
                         'textAlign': 'center',
                         'marginTop': '50px',
-                        'color': '#888'
+                        'color': 'white'
                     })
                 ]
             )
