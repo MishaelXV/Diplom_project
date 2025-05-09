@@ -7,9 +7,13 @@ def register_Pe_callback(app):
         Input('a-input', 'value')
     )
     def update_b_inputs(num_b):
-        start_value = 2000
-        step = 500
-        b_values_initial = [start_value - step * i for i in range(num_b)]
+        if num_b == 1:
+            b_values_initial = [2000]
+        else:
+            b_values_initial = [
+                round(2000 - (2000 / (num_b - 1)) * i)
+                for i in range(num_b)
+            ]
 
         def generate_boundaries(index):
             base = index * 150
@@ -69,7 +73,7 @@ def register_Pe_callback(app):
                         html.Div(
                             style={'display': 'flex', 'alignItems': 'center'},
                             children=[
-                                html.Label("Граница интервала:", style={'color': '#DDDDDD', 'marginRight': '10px'}),
+                                html.Label("Границы интервала:", style={'color': '#DDDDDD', 'marginRight': '10px'}),
                                 dcc.Input(
                                     id={'type': 'boundary-input', 'index': i},
                                     type="text",

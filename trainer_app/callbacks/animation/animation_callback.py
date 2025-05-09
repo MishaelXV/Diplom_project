@@ -6,7 +6,6 @@ from trainer_app.components.graphs import create_figure_animation, generate_fram
 
 def register_animation_callback(app):
     @app.callback(
-        Output('animation-container', 'style'),
         Output('animation-graph', 'figure'),
         Input('optimization-cache', 'data'),
         Input('boundaries-cache', 'data'),
@@ -18,7 +17,7 @@ def register_animation_callback(app):
     )
     def update_animation(optimization_data, boundaries_data, A, TG0, atg, b_values):
         if not optimization_data or not boundaries_data:
-            return {'display': 'none'}, dash.no_update
+            return dash.no_update
 
         left_boundary = boundaries_data['left']
         right_boundary = boundaries_data['right']
@@ -69,12 +68,4 @@ def register_animation_callback(app):
             y_data_noize = y_data_true,
         )
 
-        return {
-            'display': 'block',
-            'width': '98.5%',
-            'height': '450px',
-            'border': '1px solid #444444',
-            'padding': '10px',
-            'boxSizing': 'border-box',
-            'backgroundColor': '#000000'
-        }, fig
+        return fig

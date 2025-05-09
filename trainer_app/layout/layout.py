@@ -220,6 +220,20 @@ def create_debit_calculation_section():
                     'textAlign': 'center',
                 }
             ),
+            html.Button(
+                "Сгенерировать отчёт",
+                id="export_to_pdf",
+                style={
+                    'backgroundColor': '#1e1e1e',
+                    'color': '#DDDDDD',
+                    'padding': '10px 20px',
+                    'margin': '10px auto',
+                    'border': '1px solid #555',
+                    'cursor': 'pointer',
+                    'display': 'block',
+                    'textAlign': 'center',
+                }
+            ),
         ]
     )
 
@@ -268,10 +282,15 @@ def create_animation_container():
             'padding': '0',
             'boxSizing': 'border-box',
             'backgroundColor': '#111111',
-            'overflow': 'hidden'
+            'overflow': 'hidden',
+            'position': 'relative'
         },
         children=[
-                dcc.Graph(
+            dcc.Loading(
+                id="animation-loading",
+                type="circle",
+                color="#00cc96",
+                children=dcc.Graph(
                     id='animation-graph',
                     style={
                         'width': '100%',
@@ -281,10 +300,63 @@ def create_animation_container():
                     config={
                         'responsive': True,
                         'displayModeBar': False
+                    }
+                )
+            )
+        ]
+    )
+
+
+def create_parallel_coordinates_graph():
+    return html.Div(
+        style={
+            'display': 'flex',
+            'margin': '15px',
+            'backgroundColor': '#000000',
+            'border': '1px solid #444444',
+            'padding': '0',
+            'flexDirection': 'column',
+            'width': 'calc(100% - 30px)',
+            'height': '500px',
+            'overflow': 'hidden',
+        },
+        children=[
+            dcc.Loading(
+                id='parallel-loading',
+                type="circle",
+                color="#00cc96",
+                children=[
+                    dcc.Graph(
+                        id='parallel-coordinates-graph',
+                        config={
+                            'responsive': True,
+                            'displayModeBar': False,
+                        },
+                        style={
+                            'width': '100%',
+                            'height': '100%',
+                            'margin': '0',
+                            'padding': '0',
+                        },
+                        figure={
+                            'layout': {
+                                'margin': {'l': 50, 'r': 50, 't': 30, 'b': 50},
+                                'plot_bgcolor': '#000000',
+                                'paper_bgcolor': '#000000',
+                            }
                         }
                     )
-                ]
+                ],
+                style={
+                    'width': '100%',
+                    'height': '100%',
+                    'display': 'flex',
+                    'alignItems': 'center',
+                    'justifyContent': 'center',
+                }
             )
+        ]
+    )
 
 
 def create_details_container():
@@ -299,6 +371,7 @@ def create_details_container():
                     create_residuals_graphs(),
                 ]
             ),
+            create_parallel_coordinates_graph()
         ]
     )
 
@@ -361,7 +434,7 @@ def create_residuals_graphs():
         },
         children=[
             create_data_table(),
-            create_histogram_graph(),
+            create_optimization_metrics(),
         ]
     )
 
@@ -422,11 +495,12 @@ def create_data_table():
     )
 
 
-def create_histogram_graph():
+def create_optimization_metrics():
     return html.Div(
         style={
             'display': 'flex',
             'width': '100%',
+            'maxWidth': '100%',
             'height': '330px',
             'marginLeft': '15px',
             'marginTop': '15px',
@@ -434,8 +508,38 @@ def create_histogram_graph():
             'border': '1px solid #444444',
             'flexDirection': 'column',
             'overflowY': 'auto',
+            'overflowX': 'hidden',
+            'padding': '15px',
+            'color': '#DDDDDD',
+            'fontFamily': 'Arial, sans-serif',
+            'boxSizing': 'border-box'
         },
-        children=[]
+        children=[
+            html.H3("Детали оптимизации", style={
+                'textAlign': 'center',
+                'borderBottom': '1px solid #444',
+                'paddingBottom': '10px',
+                'marginBottom': '15px',
+                'whiteSpace': 'nowrap',
+                'overflow': 'hidden',
+                'textOverflow': 'ellipsis'
+            }),
+            html.Div(
+                id='optimization-metrics-content',
+                style={
+                    'overflowY': 'auto',
+                    'overflowX': 'hidden',
+                    'width': '100%'
+                },
+                children=[
+                    html.Div("Здесь будут отображаться метрики оптимизации", style={
+                        'textAlign': 'center',
+                        'marginTop': '50px',
+                        'color': '#888'
+                    })
+                ]
+            )
+        ]
     )
 
 
@@ -460,7 +564,10 @@ def create_layout():
                     create_plot_area(),
                 ]
             ),
+            dcc.Store(id='animation-loaded', data=False),
             create_animation_container(),
             create_details_container(),
+            dcc.Download(id="download-pdf"),
+            dcc.Store(id='stored-figures'),
         ]
     )

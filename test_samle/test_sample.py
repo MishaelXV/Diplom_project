@@ -25,7 +25,7 @@ atg = 0.0001
 TG0 = 1
 A = 5
 sigma = 0.001
-N = 500
+N = 250
 
 
 def plot_results(x_data, y_temp, y_data_noize, found_left, found_right, Pe_opt, Pe_true, output_path_png,

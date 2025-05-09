@@ -1,7 +1,9 @@
 import plotly.graph_objects as go
 import numpy as np
+import pandas as pd
 from main_block.main_functions import geoterma
 from main_block.main_functions import main_func
+from optimizator.optimizer import compute_leakage_profile
 from trainer_app.components.support_functions import residuals
 
 def create_figure_direct_task(z_all, T_all, T_all_noisy, left_boundary, right_boundary, TG0, atg, a):
@@ -107,12 +109,14 @@ def generate_frames(param_history, x_data, x_data_true, y_data_noize, left_bound
     colors = {
         'model': '#00BFFF',
         'true': '#A8DADC',
+        'leakage': '#FF7F50'
     }
 
     frames = []
     for i, (params_list, _) in enumerate(param_history):
         Pe_values = [fixed_first_pe] + params_list + [fixed_last_pe]
         y_predicted = main_func(x_data, TG0, atg, A, Pe_values, left_boundary, right_boundary)
+        leakage = compute_leakage_profile(x_data, left_boundary, right_boundary, Pe_values)
 
         frame = go.Frame(
             data=[
@@ -121,14 +125,25 @@ def generate_frames(param_history, x_data, x_data_true, y_data_noize, left_bound
                     y=y_predicted,
                     mode='lines',
                     name='Модельный профиль',
-                    line=dict(color=colors['model'], width=2)
+                    line=dict(color=colors['model'], width=2),
+                    yaxis='y1'
                 ),
                 go.Scatter(
                     x=x_data_true,
                     y=y_data_noize,
                     mode='lines',
                     name='Заданный профиль',
-                    line=dict(color=colors['true'], width=2)
+                    line=dict(color=colors['true'], width=2),
+                    yaxis='y1'
+                ),
+                go.Scatter(
+                    x=x_data,
+                    y=leakage,
+                    mode='lines',
+                    name='Профиль утечки (ΔPe)',
+                    line=dict(color=colors['leakage'], width=2, shape='hv'),
+                    fill='tozeroy',
+                    yaxis='y2'
                 )
             ],
             name=f'Итерация_{i}'
@@ -142,6 +157,7 @@ def create_figure_animation(frames, x_data, left_boundary, right_boundary,
     colors = {
         'model': '#00BFFF',
         'true': '#A8DADC',
+        'leakage': '#FF7F50',
         'text': '#F1FAEE',
         'border': '#2A2A2A',
         'grid': '#1A1A1A',
@@ -150,6 +166,8 @@ def create_figure_animation(frames, x_data, left_boundary, right_boundary,
 
     initial_y_predicted = main_func(x_data, TG0, atg, A, [1 for _ in range(len(b_values))],
                                     left_boundary, right_boundary)
+    initial_leakage = compute_leakage_profile(x_data, left_boundary, right_boundary,
+                                            [1 for _ in range(len(b_values))])
 
     fig = go.Figure(
         data=[
@@ -158,14 +176,25 @@ def create_figure_animation(frames, x_data, left_boundary, right_boundary,
                 y=initial_y_predicted,
                 mode='lines',
                 name='Модельный профиль',
-                line=dict(color=colors['model'], width=2)
+                line=dict(color=colors['model'], width=2),
+                yaxis='y1'
             ),
             go.Scatter(
                 x=x_data_true,
                 y=y_data_noize,
                 mode='lines',
                 name='Заданный профиль',
-                line=dict(color=colors['true'], width=2)
+                line=dict(color=colors['true'], width=2),
+                yaxis='y1'
+            ),
+            go.Scatter(
+                x=x_data,
+                y=initial_leakage,
+                mode='lines',
+                name='Профиль утечки (ΔPe)',
+                line=dict(color=colors['leakage'], width=2, shape='hv'),
+                fill='tozeroy',
+                yaxis='y2'
             )
         ],
         layout=go.Layout(
@@ -175,8 +204,6 @@ def create_figure_animation(frames, x_data, left_boundary, right_boundary,
                 color=colors['text']
             ),
             title=dict(text="Восстановление температурного профиля", font=dict(size=24), x=0.5, xanchor='center'),
-            xaxis_title=dict(text="z/rw", font=dict(size=20)),
-            yaxis_title=dict(text="θ", font=dict(size=20)),
             xaxis=dict(
                 title=dict(text="Глубина (z/rw)", font=dict(size=18)),
                 showline=True,
@@ -197,7 +224,22 @@ def create_figure_animation(frames, x_data, left_boundary, right_boundary,
                 gridcolor=colors['grid'],
                 griddash='dot',
                 zeroline=False,
-                tickfont=dict(size=15, color=colors['text'])
+                tickfont=dict(size=15, color=colors['text']),
+                domain=[0, 0.85]
+            ),
+            yaxis2=dict(
+                title=dict(text="ΔPe", font=dict(size=18)),
+                overlaying='y',
+                side='right',
+                showline=True,
+                linecolor=colors['border'],
+                linewidth=1.5,
+                gridcolor=colors['grid'],
+                griddash='dot',
+                zeroline=False,
+                tickfont=dict(size=15, color=colors['text']),
+                anchor='x',
+                range=[0, None]
             ),
             legend=dict(
                 x=0.98,
@@ -208,12 +250,12 @@ def create_figure_animation(frames, x_data, left_boundary, right_boundary,
                 bordercolor=colors['border'],
                 borderwidth=1,
                 font=dict(size=16),
-                orientation='h'
+                orientation='v'
             ),
             plot_bgcolor=colors['background'],
             paper_bgcolor=colors['background'],
             height=400,
-            margin=dict(l=60, r=20, t=60, b=100),
+            margin=dict(l=60, r=100, t=60, b=100),
             updatemenus=[
                 dict(
                     type="buttons",
@@ -433,24 +475,56 @@ def create_update_res_buttons(traces):
     return buttons
 
 
-def create_histogram(residuals_values):
-    fig = go.Figure(data=[go.Histogram(x=residuals_values)])
-    fig.update_layout(
-        title="Гистограмма отклонений Pe",
-        title_x=0.5,
-        margin=dict(l=0, r=0, b=0, t=50, pad=0),
-        plot_bgcolor='white',
-        xaxis=dict(
-            showline=True,
-            linecolor='black',
-            gridcolor='lightgray',
-            mirror=True
-        ),
-        yaxis=dict(
-            showline=True,
-            linecolor='black',
-            gridcolor='lightgray',
-            mirror=True
+def build_parallel_coordinates_figure(data):
+    df = pd.DataFrame(data)
+    colors = df['J']
+    num_dims = len(df.columns)
+
+    fig = go.Figure(
+        go.Parcoords(
+            line=dict(
+                color=colors,
+                colorscale='Viridis',
+                showscale=True,
+                cmin=colors.min(),
+                cmax=colors.max(),
+                colorbar=dict(
+                    title='J',
+                    tickfont=dict(color='white'),
+                    titlefont=dict(color='white')
+                )
+            ),
+            dimensions=[dict(
+                label=col,
+                values=df[col],
+                range=[df[col].min(), df[col].max()],
+            ) for col in df.columns],
+            labelfont=dict(color='white'),
+            tickfont=dict(color='white'),
+            rangefont=dict(color='white'),
         )
     )
+
+    spacing = 1 / (num_dims - 1)
+    fig.update_layout(
+        autosize=True,
+        shapes=[
+            dict(
+                type='line',
+                xref='paper',
+                yref='paper',
+                x0=i * spacing,
+                x1=i * spacing,
+                y0=0,
+                y1=1,
+                line=dict(color='white', width=1)
+            )
+            for i in range(num_dims)
+        ],
+        plot_bgcolor='#000000',
+        paper_bgcolor='#000000',
+        margin=dict(l=25, r=25, t=40, b=0),
+        font=dict(color='white', family='Arial'),
+    )
+
     return fig

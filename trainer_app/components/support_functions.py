@@ -1,3 +1,4 @@
+import re
 from main_block.main_functions import main_func
 
 def extract_boundaries(boundary_values):
@@ -18,8 +19,17 @@ def prepare_dataframe(df_history):
     df_history['Невязка'] = df_history['Невязка'].apply(round_mantissa)
     df_history.reset_index(inplace=True)
     df_history.rename(columns={'index': 'Итерация'}, inplace=True)
-    df_history.rename(columns={'Невязка': 'J'}, inplace=True)
-    df_history.rename(columns={'residuals': 'E'}, inplace=True)
+    df_history.rename(columns={'Невязка': 'J', 'residuals': 'E'}, inplace=True)
+
+    new_columns = {}
+    for col in df_history.columns:
+        match = re.match(r'^Pe_(\d+)$', col)
+        if match:
+            idx = int(match.group(1))
+            new_columns[col] = f'Pe_{idx + 1}'
+
+    df_history.rename(columns=new_columns, inplace=True)
+
     return df_history.to_dict('records')
 
 

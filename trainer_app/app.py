@@ -4,13 +4,18 @@ from callbacks.direct_task_callback import register_direct_task_callback
 from callbacks.update_Pe_callback import register_Pe_callback
 from callbacks.boundaries_callback import register_boundaries_callback
 from callbacks.debits_callback import register_debits_callback
-from callbacks.animation_callback import register_animation_callback
+from trainer_app.callbacks.animation.animation_callback import register_animation_callback
 from callbacks.table_callback import register_table_callback
 from callbacks.iterations_callback import register_iterations_callback
 from callbacks.residuals_callback import register_residuals_callback
-from callbacks.realisation_callback import register_realisation_callback
 from callbacks.cache_callback import register_cache_callback
 from callbacks.params_info_callback import register_params_info_callback
+from trainer_app.callbacks.animation.load_callback import register_load_callback
+from trainer_app.callbacks.details_container_visible_callback import register_details_container_visible_callback
+from trainer_app.callbacks.download_callback import register_download_callback
+from trainer_app.callbacks.loading_callback import register_loading_callback
+from trainer_app.callbacks.metrics_callback import register_metrics_callback
+from trainer_app.callbacks.parallel_graph_callback import register_parallel_graph_callback
 
 app = dash.Dash(__name__)
 
@@ -72,9 +77,14 @@ register_animation_callback(app)
 register_table_callback(app)
 register_iterations_callback(app)
 register_residuals_callback(app)
-register_realisation_callback(app)
 register_cache_callback(app)
 register_params_info_callback(app)
+register_load_callback(app)
+register_details_container_visible_callback(app)
+register_parallel_graph_callback(app)
+register_download_callback(app)
+register_loading_callback(app)
+register_metrics_callback(app)
 
 if __name__ == '__main__':
     app.run(debug=True, port=8052)

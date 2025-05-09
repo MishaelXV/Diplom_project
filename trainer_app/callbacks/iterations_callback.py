@@ -7,6 +7,7 @@ from trainer_app.components.graphs import create_iterations_traces, create_updat
 def register_iterations_callback(app):
     @app.callback(
         Output('parameters-graph', 'figure'),
+        Output('stored-figures', 'data'),
         [Input('optimization-cache', 'data'),
          Input('boundaries-cache', 'data')],
         prevent_initial_call=True
@@ -14,7 +15,8 @@ def register_iterations_callback(app):
     def update_iterations_graph(optimization_data, boundaries_data):
         try:
             if not optimization_data or not boundaries_data:
-                return go.Figure(layout=go.Layout(title="Ожидание данных..."))
+                fig = go.Figure(layout=go.Layout(title="Ожидание данных..."))
+                return fig, fig.to_plotly_json()
 
             df_history = pd.DataFrame(
                 data=optimization_data['df_history']['data'],
@@ -93,7 +95,8 @@ def register_iterations_callback(app):
                 ],
             )
 
-            return fig
+            return fig, fig.to_plotly_json()
 
         except Exception as e:
-            return go.Figure(layout=go.Layout(title=f"Ошибка: {e}"))
+            error_fig = go.Figure(layout=go.Layout(title=f"Ошибка: {e}"))
+            return error_fig, error_fig.to_plotly_json()
