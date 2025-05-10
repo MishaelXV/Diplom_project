@@ -49,7 +49,7 @@ def register_debits_callback(app):
 
             debits_elements = [
                 html.Div(
-                    f"Изолированный участок {i + 1}: Расход = {debit_value:.5f} м³/сут",
+                    f"Изолированный интервал {i + 1}: Расход = {debit_value:.5f} м³/сут",
                     style={'color': '#DDDDDD', 'margin': '4px 0'}
                 )
                 for i, debit_value in enumerate(debits[:-1])

@@ -236,6 +236,10 @@ def create_debit_calculation_section():
                             {'label': 'BFGS', 'value': 'bfgs'},
                             {'label': 'Powell', 'value': 'powell'},
                             {'label': 'L-BFGS-B', 'value': 'l-bfgs-b'},
+                            {'label': 'Levenberg-Marquardt', 'value': 'leastsq'},
+                            {'label': 'Differential evolution', 'value': 'differential_evolution'},
+                            {'label': 'Cobyla', 'value': 'cobyla'},
+                            {'label': 'Bayes', 'value': 'bayes'},
                         ],
                         value=None,
                         clearable=False,
@@ -245,6 +249,25 @@ def create_debit_calculation_section():
                             'marginBottom': '10px'
                         },
                         className='custom-dropdown'
+                    ),
+                    html.Div(
+                        id='bayes-params-container',
+                        style={'display': 'none', 'marginBottom': '10px'},
+                        children=[
+                            html.Label("Количество итераций:", style={'color': '#DDDDDD'}),
+                            dcc.Input(
+                                id='bayes-iterations',
+                                type='number',
+                                min=1,
+                                value=100,
+                                style={
+                                    'width': '100%',
+                                    'backgroundColor': '#1e1e1e',
+                                    'color': '#DDDDDD',
+                                    'border': '1px solid #555'
+                                }
+                            )
+                        ]
                     ),
                     html.Button(
                         "Запустить оптимизацию",

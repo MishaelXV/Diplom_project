@@ -78,7 +78,7 @@ def register_residuals_callback(app):
                     tickfont=dict(size=15, color=colors['text'])
                 ),
                 yaxis=dict(
-                    title='J',
+                    title='E',
                     linecolor=colors['border'],
                     linewidth=1.5,
                     mirror=False,

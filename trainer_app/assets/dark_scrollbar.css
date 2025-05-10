@@ -144,3 +144,23 @@ input[type="number"] {
 .custom-dropdown .Select-arrow-zone .Select-arrow {
     border-top-color: #DDDDDD !important;
 }
+
+html, body {
+    background-color: #111111;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    color: white;
+}
+
+.modal-content {
+    background-color: #1e1e1e !important;
+    color: #DDDDDD !important;
+    border: 1px solid #444 !important;
+}
+.modal-header, .modal-footer {
+    border-color: #444 !important;
+}
+.close {
+    color: #DDDDDD !important;
+}

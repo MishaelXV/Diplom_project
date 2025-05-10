@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from main_block.main_functions import main_func
 from dash.dependencies import Input, Output, State
+from optimizator.bayes_optimizer import run_bayes_optimization
 from optimizator.optimizer import run_optimization
 from regression.global_models import model_ws, model_ms
 from trainer_app.components.support_functions import extract_boundaries
@@ -21,12 +22,12 @@ def register_cache_callback(app):
          Input('TG0-input', 'value'),
          Input('atg-input', 'value'),
          Input('sigma-input', 'value'),
-         Input('N-input', 'value')],
+         Input('N-input', 'value'),
+         Input('bayes-iterations', 'value')],  # Добавляем ввод количества итераций
         State('optimizer-method', 'value'),
         prevent_initial_call=True
     )
-
-    def compute_and_cache(n_clicks, b_values, boundary_data, A, TG0, atg, sigma, N, optimizer_method):
+    def compute_and_cache(n_clicks, b_values, boundary_data, A, TG0, atg, sigma, N, n_trials, optimizer_method):
         if not n_clicks:
             raise dash.exceptions.PreventUpdate
 
@@ -40,11 +41,17 @@ def register_cache_callback(app):
             x_data, y_data_noize, b_values, N, sigma, A, model_ws, model_ms
         )
 
-        Pe_opt, df_history = run_optimization(
-            x_data, y_data_noize, found_left, found_right,
-            boundary_data['left'], boundary_data['right'],
-            b_values, TG0, atg, A,  optimizer_method
-        )
+        if optimizer_method == 'bayes':
+            trials = n_trials if n_trials is not None else 200
+            Pe_opt, df_history = run_bayes_optimization(x_data, y_data_noize, found_left, found_right,
+                           left_true, right_true, b_values, TG0, atg, A, trials)
+
+        else:
+            Pe_opt, df_history = run_optimization(
+                x_data, y_data_noize, found_left, found_right,
+                boundary_data['left'], boundary_data['right'],
+                b_values, TG0, atg, A, optimizer_method
+            )
 
         y_pred = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
 
@@ -89,7 +96,8 @@ def register_cache_callback(app):
                 'R2': r2,
                 'MAPE': mape,
                 'Chi2': chi2,
-                'Runtime_sec': duration
+                'Runtime_sec': duration,
+                'Количество итераций (Bayes)': n_trials if optimizer_method == 'bayes' else None
             }
         }
 

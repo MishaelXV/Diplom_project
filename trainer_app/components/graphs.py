@@ -452,7 +452,7 @@ def create_residuals_traces(Pe_opt, x_data, y_data, TG0, atg, A, left_boundary, 
             y=residuals_param,
             mode='lines',
             name=f'Pe_{i + 2}',
-            visible=(i == 0)
+            visible=False
         ))
 
     return traces

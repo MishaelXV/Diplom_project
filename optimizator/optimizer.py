@@ -1,23 +1,8 @@
 import numpy as np
-import pandas as pd
 from scipy.integrate import simpson
 from lmfit import minimize, Parameters
 from main_block.main_functions import main_func, reconstruct_Pe_list
-
-def process_results(param_history):
-    df = pd.DataFrame(param_history, columns=['parameters', 'Невязка', 'Итерация'])
-    params_df = pd.json_normalize(df['parameters'])
-
-    if 'Pe' in params_df:
-        pe_list = params_df.pop('Pe')
-        pe_df = pd.DataFrame(
-            [pe[1:-1] for pe in pe_list],
-            columns=[f"Pe_{i}" for i in range(1, len(pe_list[0]) - 1)]
-        )
-        params_df = pd.concat([params_df, pe_df], axis=1)
-
-    return pd.concat([df.drop(columns='parameters'), params_df], axis=1)
-
+from optimizator.process import process_results
 
 def create_parameters(boundary, known_pe1):
     params = Parameters()
@@ -83,6 +68,8 @@ def run_optimization(x_data, y_data, found_left, found_right, true_left, true_ri
         iter_cb=lambda params, iter, resid, *args, **kwargs: optimization_callback(
             params, iter, resid, param_history, x_data, found_left, found_right, true_left, true_right, Pe),
         nan_policy='omit',
+        # epsfcn = 1e-8
+        # ftol = 1e-2
     )
     Pe_opt = reconstruct_Pe_list(result.params, Pe[0])
 

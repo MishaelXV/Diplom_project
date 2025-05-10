@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from main_block.data import generate_data, noize_data
 from main_block.main_functions import main_func
+from optimizator.bayes_optimizer import run_bayes_optimization
 from optimizator.optimizer import run_optimization, compute_leakage_profile, calculate_deviation_metric
 from regression.find_intervals import get_boundaries
 from regression.global_models import model_ws, model_ms
@@ -20,13 +21,12 @@ plt.rcParams.update({
 # Константы
 boundary_dict = {"left": [0, 150, 300, 400],
                  "right": [100, 250, 350, 470]}
-Pe = [5000, 2000, 1000, 0]
+Pe = [20000, 10000, 5000, 0]
 atg = 0.0001
 TG0 = 1
-A = 5
-sigma = 0.001
+A = 1
+sigma = 0.01
 N = 250
-
 
 def plot_results(x_data, y_temp, y_data_noize, found_left, found_right, Pe_opt, Pe_true, output_path_png,
                  output_path_pdf):
@@ -65,7 +65,8 @@ def main():
     x_data, y_data = generate_data(boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, N)
     y_data_noize = noize_data(y_data, sigma)
 
-    found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, N, sigma, A, model_ws, model_ms)
+    # found_left, found_right = get_boundaries(x_data, y_data_noize, Pe, N, sigma, A, model_ws, model_ms)
+    found_left, found_right = [0, 150, 300, 400], [100, 250, 350, 470]
 
     if len(found_left) == 1:
         Pe_opt = [0]
@@ -75,7 +76,9 @@ def main():
 
     else:
         Pe_opt, df_history = run_optimization(x_data, y_data_noize, found_left, found_right,
-                                              boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, method = 'nelder')
+                                              boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A)
+        # Pe_opt, df_history = run_bayes_optimization(x_data, y_data_noize, found_left, found_right,
+        #                    boundary_dict['left'], boundary_dict['right'], Pe, TG0, atg, A, n_trials=200)
 
     y_temp = main_func(x_data, TG0, atg, A, Pe_opt, found_left, found_right)
 
