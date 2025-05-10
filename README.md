@@ -87,7 +87,6 @@ $$
 ![Animation](animations/charts/fit_animation.gif)
 ![Animation](animations/charts/residuals_animation.gif)
 ![Animation](animations/charts/pe_animation.gif)
-![Animation](animations/charts/optimization_path.gif)
 ### 4. Создание WEB приложения для интерактивного анализа
 
 В рамках проекта было разработано интерактивное WEB-приложение для анализа температурных профилей нагнетательных скважин.
@@ -108,7 +107,7 @@ $$
 ![Описание](stability_tests/data/charts/stability_std_N_samples/mean_deviation.png)
 ![Описание](stability_tests/data/charts/stability_std_N_samples/std_deviation.png)
 ![Описание](stability_tests/data/charts/stability_std_N_samples/histogram_combined.png)
-### 6. Карта` применимости модели
+### 6. Карта применимости модели
 
 Для определения областей наиболее эффективного применения модели построена карта применимости по заданному уровню шума в данных, учитывающая диапазон значений параметров пласта.
 
