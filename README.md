@@ -84,7 +84,7 @@ $$
 ![Описание](stability_tests/data/charts/stability_optimaizers/barplot_graph.png)
 
 Детали оптимизации:
-![Animation](app.gif)
+![Animation](trainer_app/app.gif)
 
 ### 4. Создание WEB приложения для интерактивного анализа
 
@@ -98,7 +98,6 @@ $$
 * Визуализацию результатов с возможностью масштабирования и подробного анализа.
 * Генерацию отчетов об интерпретации данных.
 
-![Animation](/Users/macbookmike_1/Downloads/output.gif)
 
 ### 5. Оценка устойчивости и чувствительности
 
