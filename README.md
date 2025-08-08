@@ -112,7 +112,7 @@ $$
 
 Для определения областей наиболее эффективного применения модели построена карта применимости по заданному уровню шума в данных, учитывающая диапазон значений параметров пласта.
 
-![Описание](stability_tests/data/charts/stability_applicability_map/applicability_map_heatmap.png)
+![Описание](stability_tests/data/charts/stability_applicability_map/map.png)
 
 
 ## Области применения
